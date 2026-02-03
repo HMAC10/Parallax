@@ -1,0 +1,116 @@
+# Drone AI Command System - Git Ignore
+
+# =============================================================================
+# Environment and Secrets
+# =============================================================================
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+credentials/
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# =============================================================================
+# Virtual Environments
+# =============================================================================
+venv/
+.venv/
+ENV/
+env/
+.env.bak/
+env.bak/
+.conda/
+conda-env/
+
+# =============================================================================
+# IDE and Editors
+# =============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+.cursor/
+
+# =============================================================================
+# Testing
+# =============================================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.coverage
+.hypothesis/
+
+# =============================================================================
+# Logs and Debug
+# =============================================================================
+*.log
+logs/
+debug/
+*.debug
+
+# =============================================================================
+# Generated Files
+# =============================================================================
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# =============================================================================
+# Project Specific
+# =============================================================================
+# Captured drone images
+captures/
+images/
+output/
+
+# Simulation data
+sim_data/
+isaac_sim_cache/
+
+# Model caches
+model_cache/
+.cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
