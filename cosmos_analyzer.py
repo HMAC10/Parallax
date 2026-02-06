@@ -95,7 +95,7 @@ Be specific about locations, quantities, and severity of any issues found."""
     def _load_model(self):
         """Load the Cosmos Reason 2 model and processor."""
         try:
-            from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
+            from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
             
             logger.info("Loading model and processor...")
             
@@ -106,7 +106,7 @@ Be specific about locations, quantities, and severity of any issues found."""
             )
             
             # Load model
-            self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+            self.model = Qwen3VLForConditionalGeneration.from_pretrained(
                 self.model_id,
                 torch_dtype=self.torch_dtype,
                 device_map=self.device,
