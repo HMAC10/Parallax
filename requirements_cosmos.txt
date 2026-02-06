@@ -1,0 +1,27 @@
+# PARALLAX - Cosmos Reason 2 Integration Requirements
+# For NVIDIA GPU inference on Brev L40S (48GB VRAM)
+
+# Core dependencies for Cosmos Reason 2 (Qwen3-VL architecture)
+transformers>=4.57.0
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Video processing
+qwen-vl-utils>=0.0.5
+opencv-python>=4.8.0
+av>=11.0.0
+
+# Image processing
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Utilities
+tqdm>=4.66.0
+pyyaml>=6.0.0
+
+# Report generation
+markdown>=3.5.0
+jinja2>=3.1.0
+
+# Optional: For better logging
+coloredlogs>=15.0.0
