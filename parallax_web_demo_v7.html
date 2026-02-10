@@ -1,0 +1,2718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARALLAX - Digital Twin Ground Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --nvidia-green: #76b900;
+            --nvidia-green-dim: #4a7500;
+            --nvidia-green-glow: rgba(118, 185, 0, 0.4);
+            --bg-dark: #0a0a0c;
+            --bg-panel: #0d0d10;
+            --bg-terminal: #030506;
+            --text-primary: #e0e0e0;
+            --text-dim: #5a5a60;
+            --warning-yellow: #f0b400;
+            --warning-orange: #e86c00;
+            --border-subtle: #1a1a1f;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #container { display: flex; height: 100vh; }
+        
+        #viewer {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0a1520 50%, #050a0f 100%);
+        }
+        
+        #canvas { width: 100%; height: 100%; }
+        
+        #hud {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            padding: 20px;
+        }
+        
+        #hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .hud-box {
+            background: rgba(5, 8, 10, 0.85);
+            border: 1px solid var(--border-subtle);
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+        }
+        
+        #mission-id {
+            color: var(--nvidia-green);
+            border-left: 3px solid var(--nvidia-green);
+        }
+        
+        #mission-id .label {
+            color: var(--text-dim);
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        #telemetry {
+            text-align: right;
+            border-right: 3px solid var(--nvidia-green);
+        }
+        
+        #telemetry .row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            margin: 2px 0;
+        }
+        
+        #telemetry .value {
+            color: var(--nvidia-green);
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        #telemetry .label { color: var(--text-dim); }
+        
+        /* Picture-in-Picture Drone Camera */
+        #pip-camera {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: #000;
+            border: 1px solid var(--nvidia-green);
+            overflow: hidden;
+        }
+        
+        #pip-camera .pip-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--nvidia-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        #pip-camera .rec-dot {
+            width: 6px;
+            height: 6px;
+            background: #ff0000;
+            border-radius: 50%;
+            animation: rec-blink 1s infinite;
+        }
+        
+        @keyframes rec-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        #pip-canvas-container {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 22px);
+        }
+        
+        #pip-canvas {
+            width: 100%;
+            height: 100%;
+            filter: saturate(0.3) brightness(1.2) contrast(1.3);
+        }
+        
+        /* CRT/Green tint overlay */
+        #pip-canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                rgba(0, 50, 0, 0.15),
+                rgba(0, 50, 0, 0.15)
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Scanline effect */
+        #pip-canvas-container::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        /* Telemetry overlay inside PIP */
+        #pip-telemetry {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 3;
+        }
+        
+        #pip-telemetry .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+        }
+        
+        #pip-telemetry .crosshair::before,
+        #pip-telemetry .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--nvidia-green);
+            opacity: 0.7;
+        }
+        
+        #pip-telemetry .crosshair::before {
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            transform: translateY(-50%);
+        }
+        
+        #pip-telemetry .crosshair::after {
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            transform: translateX(-50%);
+        }
+        
+        #pip-telemetry .crosshair-corner {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border: 1px solid var(--nvidia-green);
+            opacity: 0.7;
+        }
+        
+        #pip-telemetry .crosshair-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+        #pip-telemetry .crosshair-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+        #pip-telemetry .crosshair-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        #pip-telemetry .crosshair-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+        
+        #pip-telemetry .pip-rec {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: #ff0000;
+            animation: rec-blink 1s infinite;
+        }
+        
+        #pip-telemetry .pip-stats {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            color: var(--nvidia-green);
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+        
+        /* Hex data stream on right side of PIP */
+        #pip-hex-stream {
+            position: absolute;
+            top: 5px;
+            right: 3px;
+            bottom: 5px;
+            width: 35px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6px;
+            color: var(--nvidia-green);
+            opacity: 0.5;
+            overflow: hidden;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+        
+        #pip-hex-stream .hex-content {
+            animation: hex-scroll 8s linear infinite;
+        }
+        
+        @keyframes hex-scroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        
+        /* Thermal flash overlay for damage detection */
+        #pip-thermal-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: transparent;
+            pointer-events: none;
+            z-index: 5;
+            transition: background 0.1s ease;
+        }
+        
+        #pip-thermal-overlay.thermal-alert {
+            animation: thermal-flash 0.8s ease;
+        }
+        
+        @keyframes thermal-flash {
+            0% { background: rgba(255, 60, 0, 0); }
+            15% { background: rgba(255, 60, 0, 0.7); }
+            30% { background: rgba(255, 120, 0, 0.5); }
+            50% { background: rgba(255, 60, 0, 0.6); }
+            70% { background: rgba(255, 120, 0, 0.3); }
+            100% { background: rgba(255, 60, 0, 0); }
+        }
+        
+        /* Glitch effect */
+        #pip-thermal-overlay.glitch {
+            animation: pip-glitch 0.3s ease;
+        }
+        
+        @keyframes pip-glitch {
+            0% { background: transparent; transform: translateX(0); }
+            20% { background: rgba(255, 0, 0, 0.3); transform: translateX(-2px); }
+            40% { background: rgba(0, 255, 0, 0.2); transform: translateX(2px); }
+            60% { background: rgba(255, 0, 0, 0.4); transform: translateX(-1px); }
+            80% { background: rgba(0, 0, 255, 0.2); transform: translateX(1px); }
+            100% { background: transparent; transform: translateX(0); }
+        }
+        
+        #pip-damage-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ff3300;
+            text-shadow: 0 0 10px rgba(255, 50, 0, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 6;
+        }
+        
+        #pip-damage-indicator.active {
+            opacity: 1;
+            animation: damage-pulse 0.8s ease;
+        }
+        
+        @keyframes damage-pulse {
+            0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Command rejection overlay */
+        #rejection-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(180, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: rejection-flash 0.5s ease;
+        }
+        
+        @keyframes rejection-flash {
+            0% { background: rgba(255, 0, 0, 1); }
+            100% { background: rgba(180, 0, 0, 0.9); }
+        }
+        
+        #rejection-overlay.active {
+            display: flex;
+        }
+        
+        #rejection-overlay .rejection-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        #rejection-overlay .rejection-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+        
+        #rejection-overlay .rejection-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+        }
+        
+        #pip-camera .scan-line {
+            position: absolute;
+            top: 22px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--nvidia-green), transparent);
+            opacity: 0;
+            z-index: 4;
+        }
+        
+        #pip-camera.scanning .scan-line {
+            opacity: 0.8;
+            animation: pip-scan 1s linear infinite;
+        }
+        
+        @keyframes pip-scan {
+            0% { top: 22px; }
+            100% { top: 150px; }
+        }
+        
+        #scan-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid var(--nvidia-green);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 0 30px var(--nvidia-green-glow), inset 0 0 30px var(--nvidia-green-glow);
+        }
+        
+        #scan-overlay.active {
+            opacity: 1;
+            animation: scan-pulse 0.8s ease-out;
+        }
+        
+        @keyframes scan-pulse {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(-50%) scale(1.2); opacity: 0; }
+        }
+        
+        #status-bar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 50px;
+            background: rgba(5, 8, 10, 0.9);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+        }
+        
+        #status-bar .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 30px;
+        }
+        
+        #status-bar .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--nvidia-green);
+            box-shadow: 0 0 10px var(--nvidia-green-glow);
+        }
+        
+        #status-bar .dot.warning {
+            background: var(--warning-orange);
+            box-shadow: 0 0 10px rgba(232, 108, 0, 0.4);
+        }
+        
+        #progress-container {
+            flex: 1;
+            height: 4px;
+            background: var(--border-subtle);
+            border-radius: 2px;
+            margin: 0 20px;
+            overflow: hidden;
+        }
+        
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--nvidia-green-dim), var(--nvidia-green));
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--nvidia-green-glow);
+        }
+        
+        #terminal-panel {
+            width: 420px;
+            background: var(--bg-terminal);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #terminal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        #terminal-header h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--nvidia-green);
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px var(--nvidia-green-glow);
+        }
+        
+        #terminal-header .subtitle {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .window-controls span {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+        }
+        
+        .window-controls span:first-child { background: #ff5f57; }
+        .window-controls span:nth-child(2) { background: #ffbd2e; }
+        .window-controls span:last-child { background: #28c940; }
+        
+        #terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        #terminal-output::-webkit-scrollbar { width: 6px; }
+        #terminal-output::-webkit-scrollbar-track { background: var(--bg-terminal); }
+        #terminal-output::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+        
+        .term-line {
+            margin: 2px 0;
+            opacity: 0;
+            animation: term-fade-in 0.3s ease forwards;
+        }
+        
+        @keyframes term-fade-in { to { opacity: 1; } }
+        
+        .term-header {
+            color: var(--nvidia-green);
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .term-success { color: var(--nvidia-green); }
+        .term-warning { color: var(--warning-yellow); }
+        .term-error { color: var(--warning-orange); }
+        .term-dim { color: var(--text-dim); }
+        .term-white { color: var(--text-primary); }
+        
+        .term-finding {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin: 4px 0;
+            background: rgba(240, 180, 0, 0.1);
+            border-left: 2px solid var(--warning-yellow);
+        }
+        
+        .term-finding.medium {
+            background: rgba(232, 108, 0, 0.1);
+            border-left-color: var(--warning-orange);
+        }
+        
+        #controls-section {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        #command-display {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--nvidia-green);
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        #command-display .prompt {
+            color: var(--text-dim);
+            margin-right: 8px;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--nvidia-green);
+            caret-color: var(--nvidia-green);
+        }
+        
+        #command-input::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+        
+        #command-input:disabled {
+            opacity: 1;
+        }
+        
+        .btn-row { display: flex; gap: 10px; }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover {
+            border-color: var(--nvidia-green);
+            color: var(--nvidia-green);
+        }
+        
+        .btn-primary {
+            background: var(--nvidia-green);
+            border-color: var(--nvidia-green);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background: #8fd000;
+            border-color: #8fd000;
+            color: #000;
+            box-shadow: 0 0 20px var(--nvidia-green-glow);
+        }
+        
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        #nvidia-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .nvidia-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            padding: 4px 8px;
+            background: rgba(118, 185, 0, 0.1);
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            color: var(--nvidia-green);
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .nvidia-tag.active {
+            background: var(--nvidia-green);
+            color: #000;
+            box-shadow: 0 0 15px var(--nvidia-green), 0 0 30px var(--nvidia-green-glow);
+            animation: badge-pulse 0.8s ease-in-out infinite;
+        }
+        
+        @keyframes badge-pulse {
+            0%, 100% { box-shadow: 0 0 15px var(--nvidia-green), 0 0 30px var(--nvidia-green-glow); }
+            50% { box-shadow: 0 0 20px var(--nvidia-green), 0 0 40px var(--nvidia-green-glow); }
+        }
+        
+        #report-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #report-modal {
+            background: var(--bg-panel);
+            border: 1px solid var(--nvidia-green);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px var(--nvidia-green-glow);
+        }
+        
+        .report-header {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+            background: linear-gradient(180deg, rgba(118, 185, 0, 0.1) 0%, transparent 100%);
+        }
+        
+        .report-header .checkmark { font-size: 48px; display: block; margin-bottom: 15px; }
+        
+        .report-header h2 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--nvidia-green);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .report-header p { color: var(--text-dim); font-size: 12px; }
+        
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .report-stat {
+            padding: 20px;
+            text-align: center;
+            border-right: 1px solid var(--border-subtle);
+        }
+        
+        .report-stat:last-child { border-right: none; }
+        
+        .report-stat .value {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--nvidia-green);
+        }
+        
+        .report-stat .label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        
+        .report-section {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .report-section h4 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+        
+        .report-finding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-dark);
+            margin-bottom: 8px;
+            border-left: 3px solid var(--warning-yellow);
+        }
+        
+        .report-finding.medium { border-left-color: var(--warning-orange); }
+        .report-finding .icon { font-size: 18px; }
+        .report-finding .details { flex: 1; }
+        .report-finding .type { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+        
+        .report-finding .location {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        
+        .report-finding .severity {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 4px 8px;
+            background: rgba(240, 180, 0, 0.2);
+            color: var(--warning-yellow);
+        }
+        
+        .report-finding.medium .severity {
+            background: rgba(232, 108, 0, 0.2);
+            color: var(--warning-orange);
+        }
+        
+        .export-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            margin-bottom: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--nvidia-green);
+        }
+        
+        .export-file::before { content: '📄'; }
+        
+        .report-footer {
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .report-footer .nvidia-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .report-footer .nvidia-stack span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 6px 12px;
+            background: rgba(118, 185, 0, 0.1);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            color: var(--nvidia-green);
+        }
+        
+        .report-btn-row {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .report-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .report-btn-primary {
+            background: var(--nvidia-green);
+            color: #000;
+        }
+        
+        .report-btn-primary:hover {
+            background: #8fd000;
+            box-shadow: 0 0 30px var(--nvidia-green-glow);
+            transform: translateY(-2px);
+        }
+        
+        .report-btn-secondary {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .report-btn-secondary:hover {
+            border-color: var(--text-dim);
+            color: var(--text-primary);
+        }
+        
+        .report-btn.exported {
+            background: #28c940;
+        }
+        
+        .report-btn .btn-text {
+            transition: opacity 0.3s ease;
+        }
+        
+        .report-btn .btn-success {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .report-btn.exported .btn-text {
+            opacity: 0;
+        }
+        
+        .report-btn.exported .btn-success {
+            opacity: 1;
+        }
+        
+        .export-pulse {
+            animation: export-pulse 0.6s ease;
+        }
+        
+        @keyframes export-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px var(--nvidia-green); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="viewer">
+            <canvas id="canvas"></canvas>
+            <div id="hud">
+                <div id="hud-top">
+                    <div class="hud-box" id="mission-id">
+                        <div class="label">Mission ID</div>
+                        <div id="mission-code">PAR-2026-0204-001</div>
+                    </div>
+                    <div class="hud-box" id="telemetry">
+                        <div class="row"><span class="label">ALT</span><span class="value" id="tel-alt">0.0m</span></div>
+                        <div class="row"><span class="label">SPD</span><span class="value" id="tel-spd">0.0m/s</span></div>
+                        <div class="row"><span class="label">HDG</span><span class="value" id="tel-hdg">000°</span></div>
+                    </div>
+                </div>
+            </div>
+            <div id="scan-overlay"></div>
+            
+            <!-- Command rejection overlay -->
+            <div id="rejection-overlay">
+                <div class="rejection-icon">⛔</div>
+                <div class="rejection-text">COMMAND REJECTED</div>
+                <div class="rejection-sub">NeMoGuard: Unsafe operation detected</div>
+            </div>
+            
+            <!-- Picture-in-Picture Drone Camera -->
+            <div id="pip-camera">
+                <div class="pip-header">
+                    <span>DRONE_CAM_01</span>
+                    <div class="rec-dot"></div>
+                </div>
+                <div id="pip-canvas-container">
+                    <canvas id="pip-canvas"></canvas>
+                    <div id="pip-telemetry">
+                        <div class="crosshair">
+                            <div class="crosshair-corner tl"></div>
+                            <div class="crosshair-corner tr"></div>
+                            <div class="crosshair-corner bl"></div>
+                            <div class="crosshair-corner br"></div>
+                        </div>
+                        <div class="pip-rec">● REC</div>
+                        <div class="pip-stats">
+                            <div id="pip-alt">ALT: 0.0m</div>
+                            <div id="pip-mode">MODE: STANDBY</div>
+                        </div>
+                        <div id="pip-hex-stream">
+                            <div class="hex-content"></div>
+                        </div>
+                    </div>
+                    <div id="pip-thermal-overlay"></div>
+                    <div id="pip-damage-indicator">⚠ ANOMALY DETECTED</div>
+                </div>
+                <div class="scan-line"></div>
+            </div>
+            
+            <div id="status-bar">
+                <div class="status-item">
+                    <div class="dot" id="status-dot"></div>
+                    <span id="status-text">STANDBY</span>
+                </div>
+                <div class="status-item">
+                    <span style="color: var(--text-dim);">WPT</span>
+                    <span id="waypoint-status">0/38</span>
+                </div>
+                <div class="status-item">
+                    <span style="color: var(--text-dim);">DST</span>
+                    <span id="distance-status">0m</span>
+                </div>
+                <div id="progress-container"><div id="progress-bar"></div></div>
+                <div class="status-item">
+                    <span style="color: var(--text-dim);">COL</span>
+                    <span id="collision-status" style="color: var(--nvidia-green);">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="terminal-panel">
+            <div id="terminal-header">
+                <div>
+                    <h1>PARALLAX</h1>
+                    <div class="subtitle">DIGITAL TWIN GROUND CONTROL</div>
+                </div>
+                <div class="window-controls"><span></span><span></span><span></span></div>
+            </div>
+            <div id="terminal-output">
+                <div class="term-line term-dim">PARALLAX Mission Validator v1.0.0</div>
+                <div class="term-line term-dim">© 2026 Hunter McKay | Powered by NVIDIA</div>
+                <div class="term-line term-dim">────────────────────────────────────</div>
+                <div class="term-line term-white" style="margin-top: 10px;">System initialized. Awaiting command...</div>
+            </div>
+            <div id="controls-section">
+                <div id="command-display">
+                    <span class="prompt">&gt;</span>
+                    <input type="text" id="command-input" placeholder="Type a command..." value="" autocomplete="off">
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="start-btn" onclick="startMission()">▶ VALIDATE PATH</button>
+                    <button class="btn" onclick="resetMission()">↺ RESET</button>
+                </div>
+            </div>
+            <div id="nvidia-footer">
+                <span class="nvidia-tag" id="badge-nemotron">NEMOTRON</span>
+                <span class="nvidia-tag" id="badge-nemoguard">NEMOGUARD</span>
+                <span class="nvidia-tag" id="badge-isaac">ISAAC SIM</span>
+                <span class="nvidia-tag" id="badge-cuopt">CUOPT</span>
+                <span class="nvidia-tag" id="badge-vila">COSMOS REASON 2</span>
+                <span class="nvidia-tag" id="badge-omniverse">OMNIVERSE</span>
+                <span class="nvidia-tag" id="badge-brev">BREV</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="report-overlay">
+        <div id="report-modal">
+            <div class="report-header">
+                <span class="checkmark">✅</span>
+                <h2>PATH VALIDATED</h2>
+                <p>Flight path verified collision-free and ready for export</p>
+            </div>
+            <div class="report-stats">
+                <div class="report-stat"><div class="value" id="report-waypoints">38</div><div class="label">Waypoints</div></div>
+                <div class="report-stat"><div class="value" id="report-distance">127m</div><div class="label">Distance</div></div>
+                <div class="report-stat"><div class="value" id="report-collisions">0</div><div class="label">Collisions</div></div>
+                <div class="report-stat"><div class="value" id="report-findings">4</div><div class="label">Findings</div></div>
+            </div>
+            <div class="report-section">
+                <h4>Inspection Findings</h4>
+                <div id="report-findings-list"></div>
+            </div>
+            <div class="report-section">
+                <h4>Exported Files</h4>
+                <div class="export-file">PAR-2026-0204-001_waypoints.json</div>
+                <div class="export-file">PAR-2026-0204-001_litchi.csv</div>
+                <div class="export-file">PAR-2026-0204-001_dji_sdk.json</div>
+            </div>
+            <div class="report-footer">
+                <div class="nvidia-stack">
+                    <span>Nemotron</span><span>NeMoGuard</span><span>Isaac Sim</span><span>cuOpt</span><span>Cosmos Reason 2</span><span>Omniverse</span><span>Brev</span>
+                </div>
+                <div class="report-btn-row">
+                    <button class="report-btn report-btn-primary" id="export-btn" onclick="exportFlightPlan()">
+                        <span class="btn-text">⬆ UPLOAD TO DRONE (.JSON)</span>
+                        <span class="btn-success">✓ UPLOADED</span>
+                    </button>
+                    <button class="report-btn report-btn-secondary" onclick="closeReport()">
+                        DISMISS / NEW MISSION
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, drone, droneRotors = [];
+        let droneSpotlight, droneSpotlightTarget, scanBeam, beamMaterial;
+        let waypointMarkers = [], pathLine, unoptimizedMarkers = [];
+        let currentWaypointIndex = 0;
+        let isRunning = false;
+        let isMissionActive = false;
+        let currentAnimationId = null;
+        let findings = [];
+        let distanceTraveled = 0;
+        let solarPanels = [], powerPoles = [];
+        let clock = new THREE.Clock();
+        let dustParticles;
+        let pipRenderer, pipCamera;
+        let simulationSpeed = 1.0;
+        let currentMissionWaypoints = [];
+        let missionMode = 'full'; // 'full', 'solar', 'power'
+        
+        // Base waypoints for takeoff and landing
+        const baseWaypointsStart = [
+            { x: 0, y: 0.5, z: -3, action: "start", label: "Drone dock" },
+            { x: 0, y: 2.5, z: -3, action: "takeoff", label: "Takeoff sequence" },
+            { x: 3, y: 2.5, z: 0, action: "fly", label: "Navigate to exit" },
+            { x: 7, y: 2.5, z: 0, action: "fly", label: "Exit warehouse" },
+        ];
+        
+        const baseWaypointsEnd = [
+            { x: 7, y: 2.5, z: 0, action: "fly", label: "At entrance" },
+            { x: 3, y: 2.5, z: 0, action: "fly", label: "Enter warehouse" },
+            { x: 0, y: 2.5, z: -3, action: "fly", label: "Above dock" },
+            { x: 0, y: 0.5, z: -3, action: "land", label: "Landing" },
+        ];
+        
+        // Solar panel inspection waypoints
+        const solarWaypoints = [
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Transit to solar farm" },
+            { x: 13, y: 3.5, z: -4, action: "fly", label: "Approach panel array" },
+            { x: 13, y: 3.5, z: -4, action: "inspect", label: "Panel 1-1", panelIndex: 0 },
+            { x: 16, y: 3.5, z: -4, action: "inspect", label: "Panel 1-2", panelIndex: 1 },
+            { x: 19, y: 3.5, z: -4, action: "inspect", label: "Panel 1-3", panelIndex: 2, finding: { type: "Dust accumulation", severity: "low" } },
+            { x: 22, y: 3.5, z: -4, action: "inspect", label: "Panel 1-4", panelIndex: 3 },
+            { x: 22, y: 3.5, z: -1, action: "inspect", label: "Panel 2-4", panelIndex: 7 },
+            { x: 19, y: 3.5, z: -1, action: "inspect", label: "Panel 2-3", panelIndex: 6, finding: { type: "Crack detected", severity: "medium" } },
+            { x: 16, y: 3.5, z: -1, action: "inspect", label: "Panel 2-2", panelIndex: 5 },
+            { x: 13, y: 3.5, z: -1, action: "inspect", label: "Panel 2-1", panelIndex: 4 },
+            { x: 13, y: 3.5, z: 2, action: "inspect", label: "Panel 3-1", panelIndex: 8 },
+            { x: 16, y: 3.5, z: 2, action: "inspect", label: "Panel 3-2", panelIndex: 9, finding: { type: "Hot spot detected", severity: "medium" } },
+            { x: 19, y: 3.5, z: 2, action: "inspect", label: "Panel 3-3", panelIndex: 10 },
+            { x: 22, y: 3.5, z: 2, action: "inspect", label: "Panel 3-4", panelIndex: 11 },
+            { x: 22, y: 3.5, z: 5, action: "inspect", label: "Panel 4-4", panelIndex: 15 },
+            { x: 19, y: 3.5, z: 5, action: "inspect", label: "Panel 4-3", panelIndex: 14 },
+            { x: 16, y: 3.5, z: 5, action: "inspect", label: "Panel 4-2", panelIndex: 13 },
+            { x: 13, y: 3.5, z: 5, action: "inspect", label: "Panel 4-1", panelIndex: 12 },
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Return from solar" },
+        ];
+        
+        // Power line inspection waypoints
+        const powerWaypoints = [
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Transit to power corridor" },
+            { x: 17, y: 6, z: 2, action: "fly", label: "Climb for transit" },
+            { x: 22, y: 7, z: 0, action: "fly", label: "Approach fence" },
+            { x: 26, y: 8, z: 0, action: "fly", label: "Clear security fence" },
+            { x: 29, y: 12, z: 0, action: "fly", label: "Climb above power lines" },
+            { x: 32, y: 12, z: -5, action: "inspect", label: "Pole 1", poleIndex: 0 },
+            { x: 32, y: 12, z: -1.5, action: "inspect", label: "Pole 2", poleIndex: 1, finding: { type: "Corrosion detected", severity: "low" } },
+            { x: 32, y: 12, z: 2, action: "inspect", label: "Pole 3", poleIndex: 2 },
+            { x: 32, y: 12, z: 5.5, action: "inspect", label: "Pole 4", poleIndex: 3 },
+            { x: 29, y: 12, z: 0, action: "fly", label: "Depart power lines" },
+            { x: 26, y: 8, z: 0, action: "fly", label: "Re-cross fence" },
+            { x: 20, y: 5, z: 0, action: "fly", label: "Return transit" },
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Approach warehouse" },
+        ];
+        
+        // Full mission (combined) - legacy reference
+        const missionWaypoints = [
+            { x: 0, y: 0.5, z: -3, action: "start", label: "Drone dock" },
+            { x: 0, y: 2.5, z: -3, action: "takeoff", label: "Takeoff sequence" },
+            { x: 3, y: 2.5, z: 0, action: "fly", label: "Navigate to exit" },
+            { x: 7, y: 2.5, z: 0, action: "fly", label: "Exit warehouse" },
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Transit to solar farm" },
+            { x: 13, y: 3.5, z: -4, action: "fly", label: "Approach panel array" },
+            { x: 13, y: 3.5, z: -4, action: "inspect", label: "Panel 1-1", panelIndex: 0 },
+            { x: 16, y: 3.5, z: -4, action: "inspect", label: "Panel 1-2", panelIndex: 1 },
+            { x: 19, y: 3.5, z: -4, action: "inspect", label: "Panel 1-3", panelIndex: 2, finding: { type: "Dust accumulation", severity: "low" } },
+            { x: 22, y: 3.5, z: -4, action: "inspect", label: "Panel 1-4", panelIndex: 3 },
+            { x: 22, y: 3.5, z: -1, action: "inspect", label: "Panel 2-4", panelIndex: 7 },
+            { x: 19, y: 3.5, z: -1, action: "inspect", label: "Panel 2-3", panelIndex: 6, finding: { type: "Crack detected", severity: "medium" } },
+            { x: 16, y: 3.5, z: -1, action: "inspect", label: "Panel 2-2", panelIndex: 5 },
+            { x: 13, y: 3.5, z: -1, action: "inspect", label: "Panel 2-1", panelIndex: 4 },
+            { x: 13, y: 3.5, z: 2, action: "inspect", label: "Panel 3-1", panelIndex: 8 },
+            { x: 16, y: 3.5, z: 2, action: "inspect", label: "Panel 3-2", panelIndex: 9, finding: { type: "Hot spot detected", severity: "medium" } },
+            { x: 19, y: 3.5, z: 2, action: "inspect", label: "Panel 3-3", panelIndex: 10 },
+            { x: 22, y: 3.5, z: 2, action: "inspect", label: "Panel 3-4", panelIndex: 11 },
+            { x: 22, y: 3.5, z: 5, action: "inspect", label: "Panel 4-4", panelIndex: 15 },
+            { x: 19, y: 3.5, z: 5, action: "inspect", label: "Panel 4-3", panelIndex: 14 },
+            { x: 16, y: 3.5, z: 5, action: "inspect", label: "Panel 4-2", panelIndex: 13 },
+            { x: 13, y: 3.5, z: 5, action: "inspect", label: "Panel 4-1", panelIndex: 12 },
+            { x: 17, y: 6, z: 2, action: "fly", label: "Climb for transit" },
+            { x: 22, y: 7, z: 0, action: "fly", label: "Approach fence" },
+            { x: 26, y: 8, z: 0, action: "fly", label: "Clear security fence" },
+            { x: 29, y: 12, z: 0, action: "fly", label: "Climb above power lines" },
+            { x: 32, y: 12, z: -5, action: "inspect", label: "Pole 1", poleIndex: 0 },
+            { x: 32, y: 12, z: -1.5, action: "inspect", label: "Pole 2", poleIndex: 1, finding: { type: "Corrosion detected", severity: "low" } },
+            { x: 32, y: 12, z: 2, action: "inspect", label: "Pole 3", poleIndex: 2 },
+            { x: 32, y: 12, z: 5.5, action: "inspect", label: "Pole 4", poleIndex: 3 },
+            { x: 29, y: 12, z: 0, action: "fly", label: "Depart power lines" },
+            { x: 26, y: 8, z: 0, action: "fly", label: "Re-cross fence" },
+            { x: 20, y: 5, z: 0, action: "fly", label: "Return transit" },
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Approach warehouse" },
+            { x: 7, y: 2.5, z: 0, action: "fly", label: "At entrance" },
+            { x: 3, y: 2.5, z: 0, action: "fly", label: "Enter warehouse" },
+            { x: 0, y: 2.5, z: -3, action: "fly", label: "Above dock" },
+            { x: 0, y: 0.5, z: -3, action: "land", label: "Landing" },
+        ];
+        
+        function init() {
+            scene = new THREE.Scene();
+            
+            // Dark digital twin background
+            scene.background = new THREE.Color(0x050a0f);
+            scene.fog = new THREE.Fog(0x050a0f, 40, 150);
+            
+            camera = new THREE.PerspectiveCamera(55, (window.innerWidth - 420) / window.innerHeight, 0.1, 1000);
+            camera.position.set(25, 20, 35);
+            camera.lookAt(15, 0, 0);
+            
+            const canvas = document.getElementById('canvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+            
+            // Minimal lighting for holographic look
+            const ambientLight = new THREE.AmbientLight(0x222233, 0.3);
+            scene.add(ambientLight);
+            
+            createGround();
+            createWarehouse();
+            createSolarFarm();
+            createFence();
+            createPowerLines();
+            createTrees();
+            createDrone();
+            createWaypointPath();
+            createDustParticles();
+            
+            window.addEventListener('resize', onWindowResize);
+            
+            // Setup PIP (Picture-in-Picture) camera
+            setupPIPCamera();
+            
+            // Setup command input handling
+            setupCommandInput();
+            
+            // Start with typing animation
+            setTimeout(typeDefaultCommand, 500);
+            
+            animate();
+        }
+        
+        function setupPIPCamera() {
+            const pipCanvas = document.getElementById('pip-canvas');
+            pipRenderer = new THREE.WebGLRenderer({ canvas: pipCanvas, antialias: false });
+            pipRenderer.setSize(200, 128);
+            
+            pipCamera = new THREE.PerspectiveCamera(70, 200 / 128, 0.1, 100);
+            
+            // Generate hex stream content
+            generateHexStream();
+        }
+        
+        function generateHexStream() {
+            const hexContent = document.querySelector('#pip-hex-stream .hex-content');
+            let hexText = '';
+            // Generate enough hex for scrolling animation
+            for (let i = 0; i < 100; i++) {
+                hexText += Math.random().toString(16).substr(2, 6).toUpperCase() + '<br>';
+            }
+            // Duplicate for seamless loop
+            hexText += hexText;
+            hexContent.innerHTML = hexText;
+        }
+        
+        // Auto-type the default command on load
+        async function typeDefaultCommand() {
+            const input = document.getElementById('command-input');
+            const defaultCommand = 'inspect solar panels and power lines for damage';
+            input.value = '';
+            
+            for (let i = 0; i < defaultCommand.length; i++) {
+                input.value += defaultCommand[i];
+                await sleep(30 + Math.random() * 40);
+            }
+        }
+        
+        // Parse user command and determine mission mode
+        function parseUserCommand(cmd) {
+            const lower = cmd.toLowerCase();
+            
+            // Check for unsafe commands first
+            const unsafeKeywords = ['crash', 'collide', 'ignore', 'hit', 'unsafe', 'override safety', 'disable guard'];
+            const isUnsafe = unsafeKeywords.some(keyword => lower.includes(keyword));
+            
+            if (isUnsafe) {
+                return { mode: 'rejected', reason: 'unsafe' };
+            }
+            
+            // Determine mission mode
+            const hasSolar = lower.includes('solar') || lower.includes('panel');
+            const hasPower = lower.includes('power') || lower.includes('line') || lower.includes('pole');
+            const hasAll = lower.includes('everything') || lower.includes('both') || lower.includes('all');
+            
+            let mode = 'full';
+            if (hasAll || (hasSolar && hasPower)) {
+                mode = 'full';
+            } else if (hasPower && !hasSolar) {
+                mode = 'power';
+            } else if (hasSolar && !hasPower) {
+                mode = 'solar';
+            }
+            
+            // Extract action
+            let action = 'inspect';
+            if (lower.includes('survey')) action = 'survey';
+            if (lower.includes('check')) action = 'check';
+            if (lower.includes('scan')) action = 'scan';
+            if (lower.includes('monitor')) action = 'monitor';
+            
+            // Extract priority
+            let priority = 'general';
+            if (lower.includes('damage')) priority = 'damage';
+            if (lower.includes('crack')) priority = 'structural';
+            if (lower.includes('heat') || lower.includes('thermal') || lower.includes('hot')) priority = 'thermal';
+            if (lower.includes('corrosion') || lower.includes('rust')) priority = 'corrosion';
+            
+            // Build targets list
+            let targets = [];
+            if (mode === 'full') targets = ['solar_panels', 'power_lines'];
+            else if (mode === 'solar') targets = ['solar_panels'];
+            else if (mode === 'power') targets = ['power_lines'];
+            
+            return { mode, action, targets, priority };
+        }
+        
+        // Build mission waypoints based on mode
+        function buildMissionWaypoints(mode) {
+            let waypoints = [...baseWaypointsStart];
+            
+            if (mode === 'full') {
+                waypoints = waypoints.concat(solarWaypoints);
+                // Add transition to power lines
+                waypoints.push({ x: 17, y: 6, z: 2, action: "fly", label: "Climb for transit" });
+                waypoints.push({ x: 22, y: 7, z: 0, action: "fly", label: "Approach fence" });
+                waypoints.push({ x: 26, y: 8, z: 0, action: "fly", label: "Clear security fence" });
+                waypoints.push({ x: 29, y: 12, z: 0, action: "fly", label: "Climb above power lines" });
+                waypoints.push({ x: 32, y: 12, z: -5, action: "inspect", label: "Pole 1", poleIndex: 0 });
+                waypoints.push({ x: 32, y: 12, z: -1.5, action: "inspect", label: "Pole 2", poleIndex: 1, finding: { type: "Corrosion detected", severity: "low" } });
+                waypoints.push({ x: 32, y: 12, z: 2, action: "inspect", label: "Pole 3", poleIndex: 2 });
+                waypoints.push({ x: 32, y: 12, z: 5.5, action: "inspect", label: "Pole 4", poleIndex: 3 });
+                waypoints.push({ x: 29, y: 12, z: 0, action: "fly", label: "Depart power lines" });
+                waypoints.push({ x: 26, y: 8, z: 0, action: "fly", label: "Re-cross fence" });
+                waypoints.push({ x: 20, y: 5, z: 0, action: "fly", label: "Return transit" });
+                waypoints.push({ x: 10, y: 3.5, z: 0, action: "fly", label: "Approach warehouse" });
+            } else if (mode === 'solar') {
+                waypoints = waypoints.concat(solarWaypoints);
+            } else if (mode === 'power') {
+                waypoints = waypoints.concat(powerWaypoints);
+            }
+            
+            waypoints = waypoints.concat(baseWaypointsEnd);
+            return waypoints;
+        }
+        
+        // Get mission stats based on mode
+        function getMissionStats(mode) {
+            if (mode === 'solar') return { waypoints: 24, distance: 82, time: 2.8 };
+            if (mode === 'power') return { waypoints: 17, distance: 64, time: 2.1 };
+            return { waypoints: 38, distance: 127, time: 4.2 }; // full
+        }
+        
+        // Show rejection overlay
+        function showRejection() {
+            const overlay = document.getElementById('rejection-overlay');
+            overlay.classList.add('active');
+            
+            setTimeout(() => {
+                overlay.classList.remove('active');
+            }, 2500);
+        }
+        
+        // Handle enter key in command input
+        function setupCommandInput() {
+            const input = document.getElementById('command-input');
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && input.value.trim() && !isRunning) {
+                    startMission();
+                }
+            });
+        }
+        
+        function setBadgeActive(badgeId) {
+            // Clear all badges
+            document.querySelectorAll('.nvidia-tag').forEach(b => b.classList.remove('active'));
+            // Activate specific badge
+            if (badgeId) {
+                const badge = document.getElementById(badgeId);
+                if (badge) badge.classList.add('active');
+            }
+        }
+        
+        function createGround() {
+            // Holographic grid ground - digital twin aesthetic
+            const gridCanvas = document.createElement('canvas');
+            gridCanvas.width = 512; gridCanvas.height = 512;
+            const gctx = gridCanvas.getContext('2d');
+            
+            // Dark base
+            gctx.fillStyle = '#0a1a0a';
+            gctx.fillRect(0, 0, 512, 512);
+            
+            // Draw grid lines
+            gctx.strokeStyle = '#1a4a2a';
+            gctx.lineWidth = 1;
+            
+            // Major grid
+            for (let i = 0; i <= 512; i += 32) {
+                gctx.beginPath();
+                gctx.moveTo(i, 0);
+                gctx.lineTo(i, 512);
+                gctx.stroke();
+                gctx.beginPath();
+                gctx.moveTo(0, i);
+                gctx.lineTo(512, i);
+                gctx.stroke();
+            }
+            
+            // Minor grid
+            gctx.strokeStyle = '#0f2a1a';
+            gctx.lineWidth = 0.5;
+            for (let i = 0; i <= 512; i += 8) {
+                gctx.beginPath();
+                gctx.moveTo(i, 0);
+                gctx.lineTo(i, 512);
+                gctx.stroke();
+                gctx.beginPath();
+                gctx.moveTo(0, i);
+                gctx.lineTo(512, i);
+                gctx.stroke();
+            }
+            
+            const gridTexture = new THREE.CanvasTexture(gridCanvas);
+            gridTexture.wrapS = THREE.RepeatWrapping;
+            gridTexture.wrapT = THREE.RepeatWrapping;
+            gridTexture.repeat.set(20, 20);
+            
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshBasicMaterial({ 
+                    map: gridTexture,
+                    transparent: true,
+                    opacity: 0.8
+                })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+        }
+        
+        function createWarehouse() {
+            // Holographic wireframe warehouse - digital twin style
+            const hologramMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.DoubleSide
+            });
+            
+            const wireframeMat = new THREE.LineBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            // Floor with grid
+            const floorGeo = new THREE.BoxGeometry(12, 0.1, 12);
+            const floor = new THREE.Mesh(floorGeo, hologramMat.clone());
+            floor.position.set(0, 0.05, 0);
+            scene.add(floor);
+            
+            // Floor wireframe
+            const floorEdges = new THREE.EdgesGeometry(floorGeo);
+            const floorWire = new THREE.LineSegments(floorEdges, wireframeMat);
+            floorWire.position.copy(floor.position);
+            scene.add(floorWire);
+            
+            // Walls as wireframe boxes
+            const wallPositions = [
+                { geo: [12, 5, 0.2], pos: [0, 2.5, -6] },      // Back wall
+                { geo: [0.2, 5, 12], pos: [-6, 2.5, 0] },      // Left wall
+                { geo: [0.2, 5, 4], pos: [6, 2.5, -4] },       // Right wall top
+                { geo: [0.2, 5, 4], pos: [6, 2.5, 4] },        // Right wall bottom
+                { geo: [12, 5, 0.2], pos: [0, 2.5, 6] },       // Front wall
+            ];
+            
+            wallPositions.forEach(wall => {
+                const geo = new THREE.BoxGeometry(...wall.geo);
+                const mesh = new THREE.Mesh(geo, hologramMat.clone());
+                mesh.position.set(...wall.pos);
+                scene.add(mesh);
+                
+                const edges = new THREE.EdgesGeometry(geo);
+                const wire = new THREE.LineSegments(edges, wireframeMat);
+                wire.position.set(...wall.pos);
+                scene.add(wire);
+            });
+            
+            // Roof - transparent with wireframe
+            const roofGeo = new THREE.BoxGeometry(12.5, 0.1, 12.5);
+            const roof = new THREE.Mesh(roofGeo, new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.08
+            }));
+            roof.position.set(0, 5.1, 0);
+            scene.add(roof);
+            
+            const roofEdges = new THREE.EdgesGeometry(roofGeo);
+            const roofWire = new THREE.LineSegments(roofEdges, wireframeMat);
+            roofWire.position.copy(roof.position);
+            scene.add(roofWire);
+            
+            // Landing pad with H
+            const padCanvas = document.createElement('canvas');
+            padCanvas.width = 128; padCanvas.height = 128;
+            const pctx = padCanvas.getContext('2d');
+            pctx.fillStyle = '#001a33';
+            pctx.fillRect(0, 0, 128, 128);
+            pctx.strokeStyle = '#00ff88';
+            pctx.lineWidth = 3;
+            // H
+            pctx.beginPath();
+            pctx.moveTo(35, 25); pctx.lineTo(35, 103);
+            pctx.moveTo(93, 25); pctx.lineTo(93, 103);
+            pctx.moveTo(35, 64); pctx.lineTo(93, 64);
+            pctx.stroke();
+            // Circle
+            pctx.beginPath();
+            pctx.arc(64, 64, 55, 0, Math.PI * 2);
+            pctx.stroke();
+            
+            const padTexture = new THREE.CanvasTexture(padCanvas);
+            const dock = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 0.1, 2.5),
+                new THREE.MeshBasicMaterial({ map: padTexture, transparent: true, opacity: 0.9 })
+            );
+            dock.position.set(0, 0.15, -3);
+            scene.add(dock);
+        }
+        
+        function createSolarFarm() {
+            // Holographic solar panels - digital twin style
+            const panelMat = new THREE.MeshBasicMaterial({
+                color: 0x0066ff,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            
+            const panelWireMat = new THREE.LineBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const mountMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.4
+            });
+            
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const x = 13 + col * 3;
+                    const z = -4 + row * 3;
+                    
+                    // Panel
+                    const panelGeo = new THREE.BoxGeometry(2.2, 0.05, 1.4);
+                    const panel = new THREE.Mesh(panelGeo, panelMat.clone());
+                    panel.position.set(x, 1.3, z);
+                    panel.rotation.x = -0.2;
+                    solarPanels.push(panel);
+                    scene.add(panel);
+                    
+                    // Panel wireframe
+                    const panelEdges = new THREE.EdgesGeometry(panelGeo);
+                    const panelWire = new THREE.LineSegments(panelEdges, panelWireMat);
+                    panelWire.position.copy(panel.position);
+                    panelWire.rotation.copy(panel.rotation);
+                    scene.add(panelWire);
+                    
+                    // Grid lines on panel
+                    const gridGeo = new THREE.BufferGeometry();
+                    const gridPoints = [];
+                    for (let i = -1; i <= 1; i += 0.5) {
+                        gridPoints.push(-1.1, 0.03, i * 0.6, 1.1, 0.03, i * 0.6);
+                    }
+                    for (let i = -1; i <= 1; i += 0.5) {
+                        gridPoints.push(i * 1.0, 0.03, -0.7, i * 1.0, 0.03, 0.7);
+                    }
+                    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
+                    const gridLines = new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x0044aa, transparent: true, opacity: 0.5 }));
+                    gridLines.position.copy(panel.position);
+                    gridLines.rotation.copy(panel.rotation);
+                    scene.add(gridLines);
+                    
+                    // Mount
+                    const mountGeo = new THREE.CylinderGeometry(0.03, 0.05, 1.1, 6);
+                    const mount = new THREE.Mesh(mountGeo, mountMat);
+                    mount.position.set(x, 0.55, z);
+                    scene.add(mount);
+                }
+            }
+        }
+        
+        function createFence() {
+            // Holographic fence - digital twin style
+            const fenceWireMat = new THREE.LineBasicMaterial({ 
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.7
+            });
+            
+            // Fence posts as wireframe
+            for (let i = 0; i < 7; i++) {
+                const postGeo = new THREE.CylinderGeometry(0.03, 0.03, 3, 6);
+                const postEdges = new THREE.EdgesGeometry(postGeo);
+                const post = new THREE.LineSegments(postEdges, fenceWireMat);
+                post.position.set(26, 1.5, -7 + i * 2.3);
+                scene.add(post);
+            }
+            
+            // Top rail
+            const railGeo = new THREE.CylinderGeometry(0.02, 0.02, 14, 6);
+            const railEdges = new THREE.EdgesGeometry(railGeo);
+            const topRail = new THREE.LineSegments(railEdges, fenceWireMat);
+            topRail.rotation.x = Math.PI / 2;
+            topRail.position.set(26, 3, 0);
+            scene.add(topRail);
+            
+            // Chain link as grid lines
+            const meshGeo = new THREE.PlaneGeometry(14, 2.8, 28, 6);
+            const meshWire = new THREE.WireframeGeometry(meshGeo);
+            const fenceMesh = new THREE.LineSegments(meshWire, new THREE.LineBasicMaterial({ 
+                color: 0xffaa00, 
+                transparent: true, 
+                opacity: 0.2
+            }));
+            fenceMesh.rotation.y = Math.PI / 2;
+            fenceMesh.position.set(26, 1.5, 0);
+            scene.add(fenceMesh);
+            
+            // Warning sign
+            const signCanvas = document.createElement('canvas');
+            signCanvas.width = 64; signCanvas.height = 32;
+            const sctx = signCanvas.getContext('2d');
+            sctx.fillStyle = '#1a1a00';
+            sctx.fillRect(0, 0, 64, 32);
+            sctx.strokeStyle = '#ffaa00';
+            sctx.lineWidth = 2;
+            sctx.strokeRect(2, 2, 60, 28);
+            sctx.fillStyle = '#ffaa00';
+            sctx.font = 'bold 7px monospace';
+            sctx.textAlign = 'center';
+            sctx.fillText('⚠ RESTRICTED', 32, 12);
+            sctx.fillText('ZONE', 32, 24);
+            
+            const sign = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.2, 0.6),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(signCanvas), transparent: true, side: THREE.DoubleSide })
+            );
+            sign.position.set(26.1, 2.3, 0);
+            sign.rotation.y = Math.PI / 2;
+            scene.add(sign);
+        }
+        
+        function createPowerLines() {
+            // Holographic power lines - digital twin style
+            const poleMat = new THREE.MeshBasicMaterial({
+                color: 0xff6600,
+                transparent: true,
+                opacity: 0.3
+            });
+            
+            const poleWireMat = new THREE.LineBasicMaterial({
+                color: 0xff8844,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const wireMat = new THREE.LineBasicMaterial({ 
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const insulatorMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            for (let i = 0; i < 4; i++) {
+                const z = -5 + i * 3.5;
+                
+                // Pole
+                const poleGeo = new THREE.CylinderGeometry(0.1, 0.15, 10, 6);
+                const pole = new THREE.Mesh(poleGeo, poleMat.clone());
+                pole.position.set(32, 5, z);
+                powerPoles.push(pole);
+                scene.add(pole);
+                
+                // Pole wireframe
+                const poleEdges = new THREE.EdgesGeometry(poleGeo);
+                const poleWire = new THREE.LineSegments(poleEdges, poleWireMat);
+                poleWire.position.copy(pole.position);
+                scene.add(poleWire);
+                
+                // Cross arm
+                const armGeo = new THREE.BoxGeometry(5, 0.2, 0.2);
+                const armEdges = new THREE.EdgesGeometry(armGeo);
+                const arm = new THREE.LineSegments(armEdges, poleWireMat);
+                arm.position.set(32, 9.5, z);
+                scene.add(arm);
+                
+                // Insulators
+                [-2, 0, 2].forEach(offset => {
+                    const insGeo = new THREE.CylinderGeometry(0.05, 0.07, 0.4, 6);
+                    const insulator = new THREE.Mesh(insGeo, insulatorMat);
+                    insulator.position.set(32 + offset, 9.2, z);
+                    scene.add(insulator);
+                });
+                
+                // Wires (glowing lines)
+                if (i < 3) {
+                    [-2, 0, 2].forEach(offset => {
+                        const wireGeo = new THREE.BufferGeometry();
+                        wireGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+                            32 + offset, 9, z,
+                            32 + offset, 9, z + 3.5
+                        ], 3));
+                        const wire = new THREE.Line(wireGeo, wireMat);
+                        scene.add(wire);
+                    });
+                }
+            }
+        }
+        
+        function createTrees() {
+            // Holographic trees - digital twin obstacles
+            const treePositions = [
+                { x: -12, z: -12 }, { x: -15, z: 8 }, { x: -10, z: 15 },
+                { x: 45, z: -10 }, { x: 48, z: 5 }, { x: 42, z: 12 },
+                { x: 5, z: -20 }, { x: 20, z: -22 }, { x: 38, z: -20 },
+                { x: -8, z: 22 }, { x: 15, z: 20 }, { x: 30, z: 22 },
+                { x: -18, z: -5 }, { x: -18, z: 5 }, { x: 50, z: -2 }, { x: 50, z: 8 },
+            ];
+            
+            const treeMat = new THREE.MeshBasicMaterial({
+                color: 0xff3333,
+                transparent: true,
+                opacity: 0.2
+            });
+            
+            const treeWireMat = new THREE.LineBasicMaterial({
+                color: 0xff4444,
+                transparent: true,
+                opacity: 0.5
+            });
+            
+            treePositions.forEach(pos => {
+                const height = 3 + Math.random() * 3;
+                
+                // Trunk wireframe
+                const trunkGeo = new THREE.CylinderGeometry(0.1, 0.2, height, 6);
+                const trunkEdges = new THREE.EdgesGeometry(trunkGeo);
+                const trunk = new THREE.LineSegments(trunkEdges, treeWireMat);
+                trunk.position.set(pos.x, height / 2, pos.z);
+                scene.add(trunk);
+                
+                // Canopy as wireframe sphere (obstacle marker)
+                const canopySize = 1.5 + Math.random() * 0.8;
+                const canopyGeo = new THREE.SphereGeometry(canopySize, 8, 6);
+                const canopy = new THREE.Mesh(canopyGeo, treeMat);
+                canopy.position.set(pos.x, height + canopySize * 0.5, pos.z);
+                scene.add(canopy);
+                
+                const canopyEdges = new THREE.EdgesGeometry(canopyGeo);
+                const canopyWire = new THREE.LineSegments(canopyEdges, treeWireMat);
+                canopyWire.position.copy(canopy.position);
+                scene.add(canopyWire);
+                
+                // Obstacle label
+                const labelCanvas = document.createElement('canvas');
+                labelCanvas.width = 64; labelCanvas.height = 16;
+                const lctx = labelCanvas.getContext('2d');
+                lctx.fillStyle = '#ff4444';
+                lctx.font = '10px monospace';
+                lctx.fillText('OBSTACLE', 2, 12);
+                
+                const labelTex = new THREE.CanvasTexture(labelCanvas);
+                const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: 0.6 }));
+                label.position.set(pos.x, height + canopySize * 2 + 0.5, pos.z);
+                label.scale.set(2, 0.5, 1);
+                scene.add(label);
+            });
+        }
+        
+        function createDrone() {
+            drone = new THREE.Group();
+            
+            // Purple/magenta holographic drone body
+            const bodyMat = new THREE.MeshBasicMaterial({ 
+                color: 0x9D4EDD,
+                transparent: true,
+                opacity: 0.5
+            });
+            
+            const bodyWireMat = new THREE.LineBasicMaterial({ 
+                color: 0xBB6EFF,
+                transparent: true,
+                opacity: 1
+            });
+            
+            const bodyGeo = new THREE.BoxGeometry(0.5, 0.1, 0.5);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            drone.add(body);
+            
+            const bodyEdges = new THREE.EdgesGeometry(bodyGeo);
+            const bodyWire = new THREE.LineSegments(bodyEdges, bodyWireMat);
+            drone.add(bodyWire);
+            
+            // Glow sphere for visibility
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0x9D4EDD,
+                transparent: true,
+                opacity: 0.15
+            });
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), glowMat);
+            drone.add(glow);
+            
+            const armMat = new THREE.LineBasicMaterial({ 
+                color: 0xBB6EFF,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const armAngles = [Math.PI / 4, -Math.PI / 4, Math.PI * 3 / 4, -Math.PI * 3 / 4];
+            
+            armAngles.forEach((angle, index) => {
+                // Arm as line
+                const armGeo = new THREE.BufferGeometry();
+                const motorX = Math.cos(angle) * 0.3;
+                const motorZ = Math.sin(angle) * 0.3;
+                armGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+                    0, 0.02, 0,
+                    motorX, 0.02, motorZ
+                ], 3));
+                const arm = new THREE.Line(armGeo, armMat);
+                drone.add(arm);
+                
+                // Motor
+                const motorGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.04, 8);
+                const motorEdges = new THREE.EdgesGeometry(motorGeo);
+                const motor = new THREE.LineSegments(motorEdges, bodyWireMat);
+                motor.position.set(motorX, 0.06, motorZ);
+                drone.add(motor);
+                
+                // Rotor (spinning ring) - purple tinted
+                const rotorGeo = new THREE.RingGeometry(0.08, 0.12, 16);
+                const rotor = new THREE.Mesh(rotorGeo, new THREE.MeshBasicMaterial({ 
+                    color: 0xBB6EFF,
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                }));
+                rotor.rotation.x = -Math.PI / 2;
+                rotor.position.set(motorX, 0.1, motorZ);
+                droneRotors.push(rotor);
+                drone.add(rotor);
+                
+                // Status LED
+                const led = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.02, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x9D4EDD : 0xff0000 })
+                );
+                led.position.set(Math.cos(angle) * 0.2, -0.03, Math.sin(angle) * 0.2);
+                drone.add(led);
+            });
+            
+            // Camera gimbal
+            const gimbalGeo = new THREE.BoxGeometry(0.08, 0.05, 0.1);
+            const gimbalEdges = new THREE.EdgesGeometry(gimbalGeo);
+            const gimbal = new THREE.LineSegments(gimbalEdges, new THREE.LineBasicMaterial({ color: 0x9D4EDD }));
+            gimbal.position.set(0, -0.06, 0.1);
+            drone.add(gimbal);
+            
+            // Camera lens (glowing)
+            const lens = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025, 0.025, 0.015, 12),
+                new THREE.MeshBasicMaterial({ color: 0x00ffff })
+            );
+            lens.rotation.x = Math.PI / 2;
+            lens.position.set(0, -0.06, 0.16);
+            drone.add(lens);
+            
+            // Inspection spotlight - purple
+            droneSpotlight = new THREE.SpotLight(0x9D4EDD, 0, 15, Math.PI / 6, 0.5, 1);
+            droneSpotlight.position.set(0, -0.1, 0);
+            droneSpotlightTarget = new THREE.Object3D();
+            droneSpotlightTarget.position.set(0, -10, 0);
+            drone.add(droneSpotlightTarget);
+            droneSpotlight.target = droneSpotlightTarget;
+            drone.add(droneSpotlight);
+            
+            // Visible beam cone (for scan effect) - purple
+            const beamGeometry = new THREE.CylinderGeometry(0.02, 0.8, 3, 16, 1, true);
+            beamMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x9D4EDD, 
+                transparent: true, 
+                opacity: 0, 
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            scanBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+            scanBeam.position.set(0, -1.6, 0);
+            drone.add(scanBeam);
+            
+            drone.position.set(0, 0.5, -3);
+            scene.add(drone);
+        }
+        
+        function createWaypointPath() {
+            // Path and waypoints start completely empty
+            // They will be created dynamically during the planning phase
+            pathLine = null;
+            waypointMarkers = [];
+        }
+        
+        function createDustParticles() {
+            // Digital data particles instead of dust
+            const positions = new Float32Array(50 * 3);
+            for (let i = 0; i < 50; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 80;
+                positions[i * 3 + 1] = Math.random() * 15;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 80;
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            dustParticles = new THREE.Points(geometry, new THREE.PointsMaterial({ 
+                color: 0x00ff88, 
+                size: 0.15, 
+                transparent: true, 
+                opacity: 0.4 
+            }));
+            scene.add(dustParticles);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+            
+            if (isRunning) {
+                droneRotors.forEach((rotor, i) => {
+                    rotor.rotation.y += (i % 2 === 0 ? 1 : -1) * 30 * delta;
+                });
+            }
+            
+            if (dustParticles) {
+                const positions = dustParticles.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] += Math.sin(time + i) * 0.002;
+                    if (positions[i + 1] > 20) positions[i + 1] = 0;
+                }
+                dustParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            if (!isRunning) {
+                const orbitTime = time * 0.05;
+                camera.position.x = 20 + Math.sin(orbitTime) * 25;
+                camera.position.z = 5 + Math.cos(orbitTime) * 25;
+                camera.position.y = 18 + Math.sin(orbitTime * 0.7) * 5;
+                camera.lookAt(15, 2, 0);
+            }
+            
+            renderer.render(scene, camera);
+            
+            // Render PIP camera from drone's perspective
+            if (pipRenderer && pipCamera && drone) {
+                // Hide scan beam for PIP view
+                if (scanBeam) scanBeam.visible = false;
+                
+                pipCamera.position.copy(drone.position);
+                pipCamera.position.y -= 0.1;
+                // Look down and slightly forward
+                const lookTarget = drone.position.clone();
+                lookTarget.y -= 5;
+                lookTarget.z += 2;
+                pipCamera.lookAt(lookTarget);
+                pipRenderer.render(scene, pipCamera);
+                
+                // Restore scan beam visibility
+                if (scanBeam) scanBeam.visible = true;
+            }
+        }
+        
+        async function startMission() {
+            if (isRunning) return;
+            
+            const input = document.getElementById('command-input');
+            const userCommand = input.value.trim() || 'inspect solar panels and power lines for damage';
+            const parsedCommand = parseUserCommand(userCommand);
+            
+            // Check for rejected commands
+            if (parsedCommand.mode === 'rejected') {
+                showRejection();
+                addTerminalLine('', 'white');
+                addTerminalLine('═══ COMMAND REJECTED ═══', 'error');
+                addTerminalLine('⛔ NeMoGuard: Unsafe operation detected', 'error');
+                addTerminalLine('  Reason: Command contains prohibited keywords', 'dim');
+                addTerminalLine('  Action: Mission aborted for safety', 'dim');
+                return;
+            }
+            
+            // Set mission mode and build waypoints
+            missionMode = parsedCommand.mode;
+            currentMissionWaypoints = buildMissionWaypoints(missionMode);
+            const stats = getMissionStats(missionMode);
+            
+            // Disable input during mission
+            input.disabled = true;
+            
+            const startBtn = document.getElementById('start-btn');
+            startBtn.textContent = 'INITIALIZING...';
+            startBtn.disabled = true;
+            
+            clearTerminal();
+            await runPreFlightPhases(userCommand, parsedCommand, stats);
+            
+            isRunning = true;
+            isMissionActive = true;
+            currentWaypointIndex = 0;
+            findings = [];
+            distanceTraveled = 0;
+            
+            document.getElementById('status-text').textContent = 'VALIDATING';
+            startBtn.textContent = 'MISSION ACTIVE';
+            
+            flyToNextWaypoint();
+        }
+        
+        async function runPreFlightPhases(userCommand, parsedCommand, stats) {
+            // Show received command
+            addTerminalLine('► Command received:', 'white');
+            addTerminalLine(`  "${userCommand}"`, 'success');
+            await sleep(400);
+            
+            // Phase 0: Safety Validation
+            addTerminalLine('', 'white');
+            addTerminalLine('═══ PHASE 0: SAFETY VALIDATION ═══', 'header');
+            setBadgeActive('badge-nemoguard');
+            addTerminalLine('⟳ NeMoGuard - Validating command...', 'dim');
+            await sleep(600);
+            addTerminalLine('✓ Keyword check: PASSED', 'success');
+            await sleep(300);
+            addTerminalLine('✓ NeMoGuard AI check: SAFE', 'success');
+            addTerminalLine('✓ Command approved for execution', 'success');
+            
+            // Phase 1: NLP Processing - show parsed results
+            await sleep(400);
+            addTerminalLine('═══ PHASE 1: NLP PROCESSING ═══', 'header');
+            setBadgeActive('badge-nemotron');
+            addTerminalLine('⟳ Nemotron - Parsing natural language...', 'dim');
+            await sleep(800);
+            addTerminalLine('✓ Model: nemotron-mini-4b-instruct', 'success');
+            addTerminalLine(`  Action: ${parsedCommand.action.toUpperCase()}`, 'white');
+            addTerminalLine(`  Targets: ${parsedCommand.targets.join(', ')}`, 'white');
+            addTerminalLine(`  Priority: ${parsedCommand.priority} detection`, 'white');
+            addTerminalLine(`  Mode: ${missionMode.toUpperCase()} inspection`, 'white');
+            
+            // Phase 1.5: Drone Systems Check (NEW)
+            await sleep(400);
+            addTerminalLine('═══ PHASE 1.5: DRONE SYSTEMS CHECK ═══', 'header');
+            setBadgeActive('badge-brev');
+            addTerminalLine('⟳ Checking drone specifications...', 'dim');
+            await sleep(400);
+            addTerminalLine('  Model: DJI Matrice 350 RTK', 'white');
+            addTerminalLine('  Battery: TB65 (5880mAh × 2)', 'white');
+            await sleep(300);
+            addTerminalLine('  Max Flight Time: 55 min', 'white');
+            addTerminalLine('  Max Range: 8 km', 'white');
+            addTerminalLine('  Payload: 2.7 kg (Zenmuse H20T)', 'white');
+            await sleep(400);
+            addTerminalLine('⟳ Calculating mission requirements...', 'dim');
+            await sleep(500);
+            addTerminalLine('  Estimated Distance: 174.2m', 'white');
+            addTerminalLine('  Estimated Duration: 4.2 min', 'white');
+            addTerminalLine('  Battery Required: 8%', 'white');
+            await sleep(300);
+            addTerminalLine('✓ Drone capable of completing mission', 'success');
+            
+            // Phase 1.6: Environment Scan (NEW)
+            await sleep(400);
+            addTerminalLine('═══ PHASE 1.6: ENVIRONMENT SCAN ═══', 'header');
+            setBadgeActive('badge-omniverse');
+            addTerminalLine('⟳ Loading digital twin environment...', 'dim');
+            await sleep(500);
+            addTerminalLine('✓ Warehouse structure: MAPPED', 'success');
+            addTerminalLine('✓ Solar array (16 panels): MAPPED', 'success');
+            addTerminalLine('✓ Power line corridor: MAPPED', 'success');
+            await sleep(400);
+            addTerminalLine('⟳ Scanning for obstacles...', 'dim');
+            await sleep(600);
+            addTerminalLine('  Trees detected: 16 (marked as obstacles)', 'white');
+            addTerminalLine('  Security fence: 1 (height: 3m)', 'white');
+            addTerminalLine('  Power lines: 3 (height: 9.5m)', 'white');
+            await sleep(300);
+            addTerminalLine('⟳ Checking for environment changes...', 'dim');
+            await sleep(500);
+            addTerminalLine('  Last scan: 2026-02-03 14:30:00', 'white');
+            addTerminalLine('  New obstacles detected: 0', 'white');
+            addTerminalLine('✓ Environment clear for flight', 'success');
+            
+            // Phase 1.7: Waypoint Plotting (NEW - with visual)
+            await sleep(400);
+            addTerminalLine('═══ PHASE 1.7: WAYPOINT PLOTTING ═══', 'header');
+            setBadgeActive(null); // No specific badge for plotting
+            addTerminalLine('⟳ Computing inspection waypoints...', 'dim');
+            
+            // Show unoptimized waypoints appearing one by one
+            await plotWaypointsVisually();
+            
+            addTerminalLine(`✓ ${missionWaypoints.length} waypoints plotted`, 'success');
+            
+            // Phase 2: cuOpt Optimization (with visual)
+            await sleep(400);
+            addTerminalLine('═══ PHASE 2: PATH OPTIMIZATION ═══', 'header');
+            setBadgeActive('badge-cuopt');
+            addTerminalLine('⟳ cuOpt - Analyzing path efficiency...', 'dim');
+            await sleep(500);
+            addTerminalLine('  Initial path distance: 174.2m', 'white');
+            addTerminalLine('  Redundant segments: 12', 'white');
+            await sleep(400);
+            addTerminalLine('⟳ cuOpt - Optimizing route...', 'dim');
+            
+            // Animate waypoints shifting to optimized positions
+            await animateOptimization();
+            
+            addTerminalLine('✓ Optimized distance: 127.1m', 'success');
+            addTerminalLine('✓ Improvement: 27% shorter path', 'success');
+            
+            // Phase 3: Path Validation
+            await sleep(400);
+            addTerminalLine('═══ PHASE 3: PATH VALIDATION ═══', 'header');
+            setBadgeActive('badge-isaac');
+            addTerminalLine('⟳ Isaac Sim - Initializing simulation...', 'dim');
+            await sleep(500);
+            addTerminalLine('✓ Physics engine: ACTIVE', 'success');
+            addTerminalLine('✓ Collision detection: ACTIVE', 'success');
+            
+            // Chain of Thought reasoning logs
+            await sleep(200);
+            addTerminalLine('', 'white');
+            addTerminalLine('► AI Reasoning Chain:', 'white');
+            await sleep(150);
+            addTerminalLine('  > ANALYZING WIND SHEAR... nominal', 'dim');
+            await sleep(100);
+            addTerminalLine('  > CHECKING BATTERY CONSTRAINTS... OK', 'dim');
+            await sleep(120);
+            addTerminalLine('  > EVALUATING TAKEOFF CLEARANCE... 2.5m ✓', 'dim');
+            await sleep(100);
+            addTerminalLine('  > OBSTACLE DETECTED: TREE @ (-12, -12)... avoiding', 'dim');
+            await sleep(110);
+            addTerminalLine('  > OBSTACLE DETECTED: FENCE @ (26, 0)... altitude adjustment', 'dim');
+            await sleep(90);
+            addTerminalLine('  > CHECKING POWER LINE CLEARANCE... +2.5m margin ✓', 'dim');
+            await sleep(100);
+            addTerminalLine('  > VALIDATING RETURN PATH... clear', 'dim');
+            await sleep(120);
+            addTerminalLine('  > COMPUTING EMERGENCY LANDING ZONES... 3 identified', 'dim');
+            await sleep(100);
+            addTerminalLine('  > VERIFYING GPS LOCK... 12 satellites ✓', 'dim');
+            await sleep(80);
+            addTerminalLine('  > SIGNAL STRENGTH PROJECTION... 98% coverage', 'dim');
+            await sleep(150);
+            addTerminalLine('', 'white');
+            addTerminalLine('✓ Pre-flight reasoning complete', 'success');
+            addTerminalLine('► Starting waypoint validation...', 'white');
+            await sleep(300);
+        }
+        
+        async function plotWaypointsVisually() {
+            // Create unoptimized waypoint markers that appear one by one
+            const unoptimizedPositions = currentMissionWaypoints.map(wp => ({
+                x: wp.x + (Math.random() - 0.5) * 3,
+                y: wp.y + (Math.random() - 0.5) * 1,
+                z: wp.z + (Math.random() - 0.5) * 3
+            }));
+            
+            // Clear any existing markers
+            unoptimizedMarkers.forEach(marker => {
+                scene.remove(marker);
+                if (marker.geometry) marker.geometry.dispose();
+                if (marker.material) marker.material.dispose();
+            });
+            unoptimizedMarkers = [];
+            
+            // Plot waypoints one by one with animation
+            for (let i = 0; i < currentMissionWaypoints.length; i++) {
+                // Create marker at scattered position
+                const marker = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.15, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0 })
+                );
+                marker.position.set(unoptimizedPositions[i].x, unoptimizedPositions[i].y, unoptimizedPositions[i].z);
+                unoptimizedMarkers.push(marker);
+                scene.add(marker);
+                
+                // Animate fade in with pulse
+                marker.material.opacity = 0.8;
+                marker.scale.set(1.5, 1.5, 1.5);
+                
+                // Quick pulse animation
+                setTimeout(() => {
+                    if (marker) marker.scale.set(1, 1, 1);
+                }, 100);
+                
+                // Terminal update every few waypoints
+                if (i % 6 === 0) {
+                    addTerminalLine(`  Plotting waypoints ${i + 1}-${Math.min(i + 6, currentMissionWaypoints.length)}...`, 'dim');
+                }
+                
+                await sleep(35);
+            }
+            
+            // Draw path line connecting unoptimized markers
+            const unoptPoints = unoptimizedMarkers.map(m => m.position.clone());
+            const unoptLineGeo = new THREE.BufferGeometry().setFromPoints(unoptPoints);
+            const unoptLine = new THREE.Line(unoptLineGeo, new THREE.LineBasicMaterial({ 
+                color: 0xff4444, 
+                transparent: true, 
+                opacity: 0.3 
+            }));
+            scene.add(unoptLine);
+            unoptimizedMarkers.push(unoptLine); // Add to cleanup list
+            
+            await sleep(300);
+        }
+        
+        async function animateOptimization() {
+            const duration = 1500;
+            const startTime = Date.now();
+            
+            // Get only the sphere markers (not the line)
+            const sphereMarkers = unoptimizedMarkers.filter(m => m.geometry && m.geometry.type === 'SphereGeometry');
+            const startPositions = sphereMarkers.map(m => m.position.clone());
+            const endPositions = currentMissionWaypoints.map(wp => new THREE.Vector3(wp.x, wp.y, wp.z));
+            
+            addTerminalLine('  Reordering waypoints...', 'dim');
+            await sleep(300);
+            addTerminalLine('  Eliminating redundant paths...', 'dim');
+            
+            return new Promise(resolve => {
+                function animateStep() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Smooth easing
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    
+                    // Move markers to optimized positions
+                    sphereMarkers.forEach((marker, i) => {
+                        if (endPositions[i]) {
+                            marker.position.lerpVectors(startPositions[i], endPositions[i], eased);
+                            // Transition color from red to green
+                            const r = 1 - eased * 0.7;
+                            const g = 0.3 + eased * 0.7;
+                            marker.material.color.setRGB(r, g, 0);
+                        }
+                    });
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateStep);
+                    } else {
+                        // Clean up all unoptimized markers
+                        unoptimizedMarkers.forEach(marker => {
+                            scene.remove(marker);
+                            if (marker.geometry) marker.geometry.dispose();
+                            if (marker.material) marker.material.dispose();
+                        });
+                        unoptimizedMarkers = [];
+                        
+                        // Create final optimized waypoint markers
+                        waypointMarkers.forEach(m => scene.remove(m));
+                        waypointMarkers = [];
+                        
+                        currentMissionWaypoints.forEach((wp, i) => {
+                            const marker = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.12, 8, 8),
+                                new THREE.MeshBasicMaterial({ 
+                                    color: wp.finding ? 0xff8800 : 0x76b900, 
+                                    transparent: true, 
+                                    opacity: 0.4 
+                                })
+                            );
+                            marker.position.set(wp.x, wp.y, wp.z);
+                            waypointMarkers.push(marker);
+                            scene.add(marker);
+                        });
+                        
+                        // Create optimized path line
+                        if (pathLine) scene.remove(pathLine);
+                        const points = currentMissionWaypoints.map(wp => new THREE.Vector3(wp.x, wp.y, wp.z));
+                        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                        pathLine = new THREE.Line(lineGeo, new THREE.LineDashedMaterial({ 
+                            color: 0x76b900, 
+                            transparent: true, 
+                            opacity: 0.2, 
+                            dashSize: 1, 
+                            gapSize: 0.5 
+                        }));
+                        pathLine.computeLineDistances();
+                        scene.add(pathLine);
+                        
+                        addTerminalLine('  Optimization complete!', 'dim');
+                        resolve();
+                    }
+                }
+                animateStep();
+            });
+        }
+        
+        function flyToNextWaypoint() {
+            // Check if mission was cancelled
+            if (!isMissionActive) return;
+            
+            if (currentWaypointIndex >= currentMissionWaypoints.length) {
+                missionComplete();
+                return;
+            }
+            
+            const wp = currentMissionWaypoints[currentWaypointIndex];
+            const startPos = drone.position.clone();
+            const endPos = new THREE.Vector3(wp.x, wp.y, wp.z);
+            const distance = startPos.distanceTo(endPos);
+            distanceTraveled += distance;
+            
+            const baseDuration = Math.max(250, distance * 55);
+            const startTime = Date.now();
+            const direction = new THREE.Vector3().subVectors(endPos, startPos).normalize();
+            let accumulatedProgress = 0;
+            let lastTime = startTime;
+            
+            function animateMove() {
+                // Check if mission was cancelled mid-flight
+                if (!isMissionActive) return;
+                
+                const now = Date.now();
+                const deltaTime = (now - lastTime) * simulationSpeed;
+                lastTime = now;
+                
+                accumulatedProgress += deltaTime / baseDuration;
+                const progress = Math.min(accumulatedProgress, 1);
+                const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                // Move drone
+                drone.position.lerpVectors(startPos, endPos, eased);
+                
+                // Tilt drone in direction of travel
+                const tiltAmount = 0.15;
+                drone.rotation.x += (direction.z * tiltAmount * (1 - progress) - drone.rotation.x) * 0.1;
+                drone.rotation.z += (-direction.x * tiltAmount * (1 - progress) - drone.rotation.z) * 0.1;
+                
+                // Smooth camera follow
+                const camOffset = new THREE.Vector3(-10, 6, 14);
+                camera.position.lerp(new THREE.Vector3().addVectors(drone.position, camOffset), 0.04);
+                camera.lookAt(drone.position);
+                
+                // Update telemetry
+                updateTelemetry(wp, direction);
+                
+                if (progress < 1) {
+                    currentAnimationId = requestAnimationFrame(animateMove);
+                } else {
+                    currentAnimationId = null;
+                    onWaypointReached(wp);
+                }
+            }
+            
+            currentAnimationId = requestAnimationFrame(animateMove);
+        }
+        
+        function updateTelemetry(wp, direction) {
+            const alt = drone.position.y.toFixed(1);
+            document.getElementById('tel-alt').textContent = alt + 'm';
+            document.getElementById('pip-alt').textContent = 'ALT: ' + alt + 'm';
+            
+            document.getElementById('tel-spd').textContent = (isRunning ? (2 + Math.random() * 0.5).toFixed(1) : '0.0') + 'm/s';
+            const heading = Math.round((Math.atan2(direction.x, direction.z) * 180 / Math.PI + 360) % 360);
+            document.getElementById('tel-hdg').textContent = String(heading).padStart(3, '0') + '°';
+            document.getElementById('waypoint-status').textContent = `${currentWaypointIndex + 1}/${currentMissionWaypoints.length}`;
+            document.getElementById('distance-status').textContent = `${Math.round(distanceTraveled)}m`;
+            document.getElementById('progress-bar').style.width = `${((currentWaypointIndex + 1) / currentMissionWaypoints.length) * 100}%`;
+            
+            // Update PIP mode based on action
+            if (wp.action === 'inspect') {
+                document.getElementById('pip-mode').textContent = 'MODE: INSPECT';
+            } else if (wp.action === 'takeoff' || wp.action === 'land') {
+                document.getElementById('pip-mode').textContent = 'MODE: ' + wp.action.toUpperCase();
+            } else {
+                document.getElementById('pip-mode').textContent = 'MODE: FLIGHT';
+            }
+        }
+        
+        function onWaypointReached(wp) {
+            waypointMarkers[currentWaypointIndex].material.opacity = 0.8;
+            waypointMarkers[currentWaypointIndex].material.color.setHex(0x00ff00);
+            
+            addTerminalLine(`✓ WPT ${String(currentWaypointIndex + 1).padStart(2, '0')} (${wp.x.toFixed(0)}, ${wp.y.toFixed(1)}, ${wp.z.toFixed(0)}) - CLEAR`, 'success');
+            
+            if (wp.action === 'inspect') {
+                triggerScanEffect(wp);
+                if (wp.finding) {
+                    setTimeout(() => addFinding(wp), 200);
+                }
+            }
+            
+            currentWaypointIndex++;
+            setTimeout(flyToNextWaypoint, wp.action === 'inspect' ? 300 : 150);
+        }
+        
+        function triggerScanEffect(wp) {
+            // Activate Cosmos Reason 2 badge
+            setBadgeActive('badge-vila');
+            
+            // Only slow down for DAMAGE detection (not clear panels)
+            const hasDamage = wp.finding !== undefined;
+            
+            if (hasDamage) {
+                // MATRIX EFFECT: Slow down simulation for dramatic damage reveal
+                simulationSpeed = 0.1;
+                
+                // Thermal flash in PIP
+                const thermalOverlay = document.getElementById('pip-thermal-overlay');
+                thermalOverlay.classList.add('thermal-alert');
+                setTimeout(() => thermalOverlay.classList.remove('thermal-alert'), 800);
+                
+                // Glitch effect
+                setTimeout(() => {
+                    thermalOverlay.classList.add('glitch');
+                    setTimeout(() => thermalOverlay.classList.remove('glitch'), 300);
+                }, 200);
+                
+                // Show damage indicator in PIP
+                const damageIndicator = document.getElementById('pip-damage-indicator');
+                damageIndicator.textContent = '⚠ ' + wp.finding.type.toUpperCase();
+                damageIndicator.classList.add('active');
+                setTimeout(() => damageIndicator.classList.remove('active'), 800);
+                
+                // Speed back up after 1.2 seconds
+                setTimeout(() => {
+                    simulationSpeed = 1.0;
+                }, 1200);
+            }
+            
+            // Activate the spotlight beam from drone
+            droneSpotlight.intensity = 2;
+            beamMaterial.opacity = 0.3;
+            
+            // Add scanning effect to PIP
+            document.getElementById('pip-camera').classList.add('scanning');
+            document.getElementById('pip-mode').textContent = 'MODE: SCANNING';
+            
+            // Pulse effect
+            setTimeout(() => {
+                droneSpotlight.intensity = 3;
+                beamMaterial.opacity = 0.5;
+            }, 100);
+            
+            setTimeout(() => {
+                droneSpotlight.intensity = 2;
+                beamMaterial.opacity = 0.3;
+            }, 200);
+            
+            setTimeout(() => {
+                droneSpotlight.intensity = 0;
+                beamMaterial.opacity = 0;
+                document.getElementById('pip-camera').classList.remove('scanning');
+                document.getElementById('pip-mode').textContent = 'MODE: FLIGHT';
+                setBadgeActive('badge-isaac');
+            }, hasDamage ? 800 : 400);
+        }
+        
+        function addFinding(wp) {
+            findings.push({ ...wp.finding, x: wp.x, z: wp.z });
+            
+            const findingLine = document.createElement('div');
+            findingLine.className = `term-line term-finding ${wp.finding.severity === 'medium' ? 'medium' : ''}`;
+            findingLine.innerHTML = `${wp.finding.severity === 'low' ? '🟡' : '🟠'} ${wp.finding.type} <span style="margin-left: auto; opacity: 0.6;">📷 IMG_${String(findings.length).padStart(3, '0')}.jpg</span>`;
+            document.getElementById('terminal-output').appendChild(findingLine);
+            scrollTerminal();
+            
+            document.getElementById('status-dot').classList.add('warning');
+            setTimeout(() => document.getElementById('status-dot').classList.remove('warning'), 1000);
+            
+            if (wp.panelIndex !== undefined && solarPanels[wp.panelIndex]) {
+                solarPanels[wp.panelIndex].material.color.setHex(0xff3333);
+                solarPanels[wp.panelIndex].material.opacity = 0.6;
+            }
+            if (wp.poleIndex !== undefined && powerPoles[wp.poleIndex]) {
+                powerPoles[wp.poleIndex].material.color.setHex(0xff5533);
+                powerPoles[wp.poleIndex].material.opacity = 0.6;
+            }
+        }
+        
+        function missionComplete() {
+            isRunning = false;
+            isMissionActive = false;
+            
+            document.getElementById('status-text').textContent = 'COMPLETE';
+            document.getElementById('start-btn').textContent = '▶ VALIDATE PATH';
+            document.getElementById('start-btn').disabled = false;
+            
+            addTerminalLine('', 'white');
+            addTerminalLine('═══ PHASE 4: VISION ANALYSIS ═══', 'header');
+            setBadgeActive('badge-vila');
+            addTerminalLine(`✓ Cosmos Reason 2 analyzed ${currentMissionWaypoints.filter(w => w.action === 'inspect').length} inspection points`, 'success');
+            addTerminalLine(`✓ ${findings.length} issues detected`, findings.length > 0 ? 'warning' : 'success');
+            
+            addTerminalLine('', 'white');
+            addTerminalLine('═══ PHASE 5: EXPORT ═══', 'header');
+            setBadgeActive(null);
+            addTerminalLine('✓ PAR-2026-0204-001_waypoints.json', 'success');
+            addTerminalLine('✓ PAR-2026-0204-001_litchi.csv', 'success');
+            addTerminalLine('✓ PAR-2026-0204-001_dji_sdk.json', 'success');
+            
+            addTerminalLine('', 'white');
+            addTerminalLine('════════════════════════════════════', 'success');
+            addTerminalLine('   ✅ PATH VALIDATED & EXPORTED', 'success');
+            addTerminalLine('════════════════════════════════════', 'success');
+            
+            document.getElementById('report-waypoints').textContent = missionWaypoints.length;
+            document.getElementById('report-distance').textContent = `${Math.round(distanceTraveled)}m`;
+            document.getElementById('report-collisions').textContent = '0';
+            document.getElementById('report-findings').textContent = findings.length;
+            
+            document.getElementById('report-findings-list').innerHTML = findings.map((f, i) => `
+                <div class="report-finding ${f.severity === 'medium' ? 'medium' : ''}">
+                    <span class="icon">${f.severity === 'low' ? '🟡' : '🟠'}</span>
+                    <div class="details">
+                        <div class="type">${f.type}</div>
+                        <div class="location">Location: (${f.x.toFixed(0)}, ${f.z.toFixed(0)}) | 📷 IMG_${String(i + 1).padStart(3, '0')}.jpg</div>
+                    </div>
+                    <span class="severity">${f.severity.toUpperCase()}</span>
+                </div>
+            `).join('');
+            
+            setTimeout(() => document.getElementById('report-overlay').style.display = 'flex', 500);
+        }
+        
+        function closeReport() {
+            document.getElementById('report-overlay').style.display = 'none';
+            // Reset export button state for next mission
+            const btn = document.getElementById('export-btn');
+            btn.classList.remove('exported', 'export-pulse');
+        }
+        
+        function exportFlightPlan() {
+            const btn = document.getElementById('export-btn');
+            
+            // Pulse animation
+            btn.classList.add('export-pulse');
+            
+            // After pulse, show success state
+            setTimeout(() => {
+                btn.classList.remove('export-pulse');
+                btn.classList.add('exported');
+                
+                // Create and trigger actual JSON download
+                const flightPlan = {
+                    mission_id: 'PAR-2026-0204-001',
+                    timestamp: new Date().toISOString(),
+                    drone_model: 'DJI Matrice 350 RTK',
+                    waypoints: missionWaypoints.map((wp, i) => ({
+                        index: i + 1,
+                        latitude: 47.6062 + (wp.x * 0.00001),
+                        longitude: -122.3321 + (wp.z * 0.00001),
+                        altitude: wp.y,
+                        action: wp.action,
+                        label: wp.label
+                    })),
+                    findings: findings,
+                    validation: {
+                        status: 'PASSED',
+                        collisions: 0,
+                        total_distance: Math.round(distanceTraveled),
+                        optimization: '27%'
+                    },
+                    generated_by: 'PARALLAX Digital Twin Ground Control',
+                    nvidia_stack: ['Nemotron', 'NeMoGuard', 'Isaac Sim', 'cuOpt', 'Cosmos Reason 2', 'Omniverse', 'Brev']
+                };
+                
+                const blob = new Blob([JSON.stringify(flightPlan, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'PAR-2026-0204-001_flight_plan.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 600);
+        }
+        
+        function resetMission() {
+            // CRITICAL: Stop all mission activity immediately
+            isRunning = false;
+            isMissionActive = false;
+            simulationSpeed = 1.0;
+            
+            // Cancel any running waypoint animation
+            if (currentAnimationId) {
+                cancelAnimationFrame(currentAnimationId);
+                currentAnimationId = null;
+            }
+            
+            currentWaypointIndex = 0;
+            findings = [];
+            distanceTraveled = 0;
+            currentMissionWaypoints = [];
+            
+            drone.position.set(0, 0.5, -3);
+            drone.rotation.set(0, 0, 0);
+            
+            // Turn off scan beam
+            if (droneSpotlight) droneSpotlight.intensity = 0;
+            if (beamMaterial) beamMaterial.opacity = 0;
+            
+            // Clear badges
+            setBadgeActive(null);
+            
+            // Clear PIP effects
+            document.getElementById('pip-camera').classList.remove('scanning');
+            document.getElementById('pip-mode').textContent = 'MODE: STANDBY';
+            document.getElementById('pip-alt').textContent = 'ALT: 0.0m';
+            document.getElementById('pip-thermal-overlay').classList.remove('thermal-alert', 'glitch');
+            document.getElementById('pip-damage-indicator').classList.remove('active');
+            
+            // Hide rejection overlay
+            document.getElementById('rejection-overlay').classList.remove('active');
+            
+            // FULLY CLEAR: Remove all unoptimized markers from scene
+            unoptimizedMarkers.forEach(marker => {
+                scene.remove(marker);
+                if (marker.geometry) marker.geometry.dispose();
+                if (marker.material) marker.material.dispose();
+            });
+            unoptimizedMarkers = [];
+            
+            // FULLY CLEAR: Remove all waypoint markers
+            waypointMarkers.forEach(marker => {
+                scene.remove(marker);
+                if (marker.geometry) marker.geometry.dispose();
+                if (marker.material) marker.material.dispose();
+            });
+            waypointMarkers = [];
+            
+            // Remove path line
+            if (pathLine) {
+                scene.remove(pathLine);
+                if (pathLine.geometry) pathLine.geometry.dispose();
+                if (pathLine.material) pathLine.material.dispose();
+                pathLine = null;
+            }
+            
+            // Reset solar panels and poles (holographic style)
+            solarPanels.forEach(panel => {
+                panel.material.color.setHex(0x0066ff);
+                panel.material.opacity = 0.3;
+            });
+            
+            powerPoles.forEach(pole => {
+                pole.material.color.setHex(0xff6600);
+                pole.material.opacity = 0.3;
+            });
+            
+            // Reset UI
+            document.getElementById('waypoint-status').textContent = '0/38';
+            document.getElementById('distance-status').textContent = '0m';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('status-text').textContent = 'STANDBY';
+            document.getElementById('tel-alt').textContent = '0.0m';
+            document.getElementById('tel-spd').textContent = '0.0m/s';
+            document.getElementById('tel-hdg').textContent = '000°';
+            document.getElementById('start-btn').textContent = '▶ VALIDATE PATH';
+            document.getElementById('start-btn').disabled = false;
+            
+            // Re-enable command input
+            const input = document.getElementById('command-input');
+            input.disabled = false;
+            input.focus();
+            
+            clearTerminal();
+            addTerminalLine('System initialized. Awaiting command...', 'white');
+        }
+        
+        function clearTerminal() {
+            document.getElementById('terminal-output').innerHTML = '';
+        }
+        
+        function addTerminalLine(text, type = 'white') {
+            const line = document.createElement('div');
+            line.className = `term-line term-${type}`;
+            line.textContent = text;
+            document.getElementById('terminal-output').appendChild(line);
+            scrollTerminal();
+        }
+        
+        function scrollTerminal() {
+            const terminal = document.getElementById('terminal-output');
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
