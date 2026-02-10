@@ -1,0 +1,374 @@
+{
+  "version": "1.0",
+  "type": "WAYPOINT_MISSION",
+  "mission": {
+    "missionConfig": {
+      "autoFlightSpeed": 5.0,
+      "maxFlightSpeed": 8.0,
+      "finishedAction": "GO_HOME",
+      "headingMode": "AUTO",
+      "flightPathMode": "NORMAL"
+    },
+    "waypoints": [
+      {
+        "waypointIndex": 0,
+        "coordinate": {
+          "latitude": 47.65974,
+          "longitude": -122.31675,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "takeoff",
+          "asset_id": null,
+          "notes": "Takeoff from anchor point"
+        }
+      },
+      {
+        "waypointIndex": 1,
+        "coordinate": {
+          "latitude": 47.65974104926405,
+          "longitude": -122.31674735157988,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "transit",
+          "asset_id": "pole_1",
+          "notes": "Transit to pole_1"
+        }
+      },
+      {
+        "waypointIndex": 2,
+        "coordinate": {
+          "latitude": 47.65974104926405,
+          "longitude": -122.31674735157988,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "descend",
+          "asset_id": "pole_1",
+          "notes": "Descend for inspection of pole_1"
+        }
+      },
+      {
+        "waypointIndex": 3,
+        "coordinate": {
+          "latitude": 47.65974104926405,
+          "longitude": -122.31674735157988,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [
+          {
+            "type": "TAKE_PHOTO",
+            "param": 0
+          },
+          {
+            "type": "ROTATE_GIMBAL",
+            "param": -90
+          }
+        ],
+        "metadata": {
+          "action": "inspect",
+          "asset_id": "pole_1",
+          "notes": "Inspect pole_1 - utility_pole"
+        }
+      },
+      {
+        "waypointIndex": 4,
+        "coordinate": {
+          "latitude": 47.65974104926405,
+          "longitude": -122.31674735157988,
+          "altitude": 25
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "ascend",
+          "asset_id": "pole_1",
+          "notes": "Ascend after inspecting pole_1"
+        }
+      },
+      {
+        "waypointIndex": 5,
+        "coordinate": {
+          "latitude": 47.65977401885866,
+          "longitude": -122.31679563133972,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "transit",
+          "asset_id": "pole_2",
+          "notes": "Transit to pole_2"
+        }
+      },
+      {
+        "waypointIndex": 6,
+        "coordinate": {
+          "latitude": 47.65977401885866,
+          "longitude": -122.31679563133972,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "descend",
+          "asset_id": "pole_2",
+          "notes": "Descend for inspection of pole_2"
+        }
+      },
+      {
+        "waypointIndex": 7,
+        "coordinate": {
+          "latitude": 47.65977401885866,
+          "longitude": -122.31679563133972,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [
+          {
+            "type": "TAKE_PHOTO",
+            "param": 0
+          },
+          {
+            "type": "ROTATE_GIMBAL",
+            "param": -90
+          }
+        ],
+        "metadata": {
+          "action": "inspect",
+          "asset_id": "pole_2",
+          "notes": "Inspect pole_2 - utility_pole"
+        }
+      },
+      {
+        "waypointIndex": 8,
+        "coordinate": {
+          "latitude": 47.65977401885866,
+          "longitude": -122.31679563133972,
+          "altitude": 25
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "ascend",
+          "asset_id": "pole_2",
+          "notes": "Ascend after inspecting pole_2"
+        }
+      },
+      {
+        "waypointIndex": 9,
+        "coordinate": {
+          "latitude": 47.659941576343,
+          "longitude": -122.31672924666938,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "transit",
+          "asset_id": "pole_3",
+          "notes": "Transit to pole_3"
+        }
+      },
+      {
+        "waypointIndex": 10,
+        "coordinate": {
+          "latitude": 47.659941576343,
+          "longitude": -122.31672924666938,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "descend",
+          "asset_id": "pole_3",
+          "notes": "Descend for inspection of pole_3"
+        }
+      },
+      {
+        "waypointIndex": 11,
+        "coordinate": {
+          "latitude": 47.659941576343,
+          "longitude": -122.31672924666938,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [
+          {
+            "type": "TAKE_PHOTO",
+            "param": 0
+          },
+          {
+            "type": "ROTATE_GIMBAL",
+            "param": -90
+          }
+        ],
+        "metadata": {
+          "action": "inspect",
+          "asset_id": "pole_3",
+          "notes": "Inspect pole_3 - utility_pole"
+        }
+      },
+      {
+        "waypointIndex": 12,
+        "coordinate": {
+          "latitude": 47.659941576343,
+          "longitude": -122.31672924666938,
+          "altitude": 25
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "ascend",
+          "asset_id": "pole_3",
+          "notes": "Ascend after inspecting pole_3"
+        }
+      },
+      {
+        "waypointIndex": 13,
+        "coordinate": {
+          "latitude": 47.659967319628024,
+          "longitude": -122.31652808100338,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "transit",
+          "asset_id": "pole_4",
+          "notes": "Transit to pole_4"
+        }
+      },
+      {
+        "waypointIndex": 14,
+        "coordinate": {
+          "latitude": 47.659967319628024,
+          "longitude": -122.31652808100338,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "descend",
+          "asset_id": "pole_4",
+          "notes": "Descend for inspection of pole_4"
+        }
+      },
+      {
+        "waypointIndex": 15,
+        "coordinate": {
+          "latitude": 47.659967319628024,
+          "longitude": -122.31652808100338,
+          "altitude": 12
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [
+          {
+            "type": "TAKE_PHOTO",
+            "param": 0
+          },
+          {
+            "type": "ROTATE_GIMBAL",
+            "param": -90
+          }
+        ],
+        "metadata": {
+          "action": "inspect",
+          "asset_id": "pole_4",
+          "notes": "Inspect pole_4 - utility_pole"
+        }
+      },
+      {
+        "waypointIndex": 16,
+        "coordinate": {
+          "latitude": 47.659967319628024,
+          "longitude": -122.31652808100338,
+          "altitude": 25
+        },
+        "speed": 2.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "ascend",
+          "asset_id": "pole_4",
+          "notes": "Ascend after inspecting pole_4"
+        }
+      },
+      {
+        "waypointIndex": 17,
+        "coordinate": {
+          "latitude": 47.65974,
+          "longitude": -122.31675,
+          "altitude": 25
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "transit",
+          "asset_id": null,
+          "notes": "Return to anchor point"
+        }
+      },
+      {
+        "waypointIndex": 18,
+        "coordinate": {
+          "latitude": 47.65974,
+          "longitude": -122.31675,
+          "altitude": 0
+        },
+        "speed": 5.0,
+        "heading": 0,
+        "turnMode": "AUTO",
+        "actions": [],
+        "metadata": {
+          "action": "land",
+          "asset_id": null,
+          "notes": "Land at anchor point"
+        }
+      }
+    ]
+  }
+}

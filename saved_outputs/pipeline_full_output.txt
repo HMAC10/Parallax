@@ -1,0 +1,159 @@
+
+[96m[1m
+██████╗  █████╗ ██████╗  █████╗ ██╗     ██╗      █████╗ ██╗  ██╗
+██╔══██╗██╔══██╗██╔══██╗██╔══██╗██║     ██║     ██╔══██╗╚██╗██╔╝
+██████╔╝███████║██████╔╝███████║██║     ██║     ███████║ ╚███╔╝ 
+██╔═══╝ ██╔══██║██╔══██╗██╔══██║██║     ██║     ██╔══██║ ██╔██╗ 
+██║     ██║  ██║██║  ██║██║  ██║███████╗███████╗██║  ██║██╔╝ ██╗
+╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+             Digital Twin Ground Control v1.0
+               Powered by NVIDIA AI Stack
+[0m
+Command: inspect all poles
+Site: demo_site.json
+Output: /workspace/Parallax/output
+
+
+[96m==============================================================
+  PHASE 0: NeMoGuard Safety Validation
+==============================================================[0m
+
+Validating command: "inspect all poles"
+
+[92m[OK] Command validated — safe to proceed[0m
+Duration: 0.50s
+
+[96m==============================================================
+  PHASE 1: Nemotron NLP Parsing (NVIDIA NIM)
+==============================================================[0m
+
+Parsing command via NVIDIA NIM API...
+Resolving asset references...
+
+[92m[OK] Parsed: INSPECT mission — 4 assets identified[0m
+
+Mission Parameters:
+  • Type: INSPECT
+  • Assets: pole_1, pole_2, pole_3, pole_4
+  • Transit Altitude: 25m
+  • Inspection Altitude: 12m
+
+Duration: 1.30s
+
+[96m==============================================================
+  PHASE 2: cuOpt Route Optimization
+==============================================================[0m
+
+Optimizing route for 4 waypoints...
+Applying nearest-neighbor optimization...
+
+[92m[OK] Route optimized — 15.0% distance reduction (83m -> 70m)[0m
+
+Optimized Visit Order:
+  1. pole_1 (utility_pole)
+  2. pole_2 (utility_pole)
+  3. pole_3 (utility_pole)
+  4. pole_4 (utility_pole)
+
+Duration: 1.10s
+
+[96m==============================================================
+  PHASE 3: Isaac Sim Validation (NVIDIA Omniverse)
+==============================================================[0m
+
+Loading digital twin environment...
+Validating 4 path segments...
+  [92m[OK][0m Altitude clearance
+  [92m[OK][0m Obstacle detection
+  [92m[OK][0m No-fly zone check
+  [92m[OK][0m Wind conditions
+  [92m[OK][0m Battery feasibility
+
+[92m[OK] Flight path validated — no collisions detected[0m
+Duration: 2.70s
+
+[96m==============================================================
+  PHASE 4: Export Flight Plan
+==============================================================[0m
+
+Generating waypoints...
+Exporting to multiple formats...
+
+[92m[OK] Flight plan exported to 3 formats[0m
+
+Exported Files:
+  * litchi: parallax_mission_litchi_20260210_052539.csv
+  * json: parallax_mission_waypoints_20260210_052539.json
+  * dji_sdk: parallax_mission_dji_20260210_052539.json
+
+Mission Summary:
+  * Total Distance: 199.2m (0.20km)
+  * Estimated Duration: 1.60 minutes
+  * Waypoints: 19
+  * Inspections: 4
+  * Max Altitude: 25.0m
+
+Duration: 1.10s
+
+[96m==============================================================
+  PHASE 5: Cosmos Reason 2 Vision Analysis (Hugging Face)
+==============================================================[0m
+
+Using mock Cosmos output (--mock mode)...
+
+Generating inspection report...
+
+[92m[OK] Analysis complete — 3 findings identified[0m
+
+Key Findings:
+  [93m* [WARNING][0m Pole 4: Vegetation encroachment detected, tree branches within 1m of power lines
+  [0m* [INFO][0m Poles 1-3: Good condition, no immediate issues
+  [0m* [INFO][0m All pole structures appear stable with no visible rust or damage
+
+Reports Generated:
+  * Markdown: inspection_report_20260210_052541.md
+  * JSON: inspection_report_20260210_052541.json
+
+Duration: 1.40s
+
+[96m[1m==============================================================
+  MISSION SUMMARY
+==============================================================[0m
+
+[1mMission Configuration:[0m
+  * Type: INSPECT
+  * Assets: 4 (pole_1, pole_2, pole_3, pole_4)
+  * Route Optimization: 15.0% improvement
+
+[1mFlight Plan:[0m
+  * Distance: 199.2m (0.20km)
+  * Duration: 1.60 minutes
+  * Waypoints: 19
+  * Inspections: 4
+
+[1mAnalysis Results:[0m
+  * Total Findings: 3
+  * Critical: 0
+  * Warnings: 1
+
+[1mPipeline Performance:[0m
+  * Phase 0: NeMoGuard: 0.50s
+  * Phase 1: Nemotron: 1.30s
+  * Phase 2: cuOpt: 1.10s
+  * Phase 3: Isaac Sim: 2.70s
+  * Phase 4: Export: 1.10s
+  * Phase 5: Cosmos: 1.40s
+  * Total: 8.11s
+
+[1mNVIDIA AI Stack:[0m
+  * NeMoGuard      - Safety & content filtering
+  * Nemotron       - Natural language understanding
+  * NIM            - Model inference microservices
+  * cuOpt          - Route optimization
+  * Isaac Sim      - Physics simulation & validation
+  * Omniverse      - Digital twin platform
+  * Cosmos Reason 2 - Physical AI video reasoning
+  * Brev           - GPU cloud infrastructure
+
+[92m[1m[SUCCESS] PARALLAX MISSION COMPLETE[0m
+

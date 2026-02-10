@@ -1,0 +1,170 @@
+{
+  "metadata": {
+    "format": "PARALLAX Waypoint JSON v1.0",
+    "generated_at": "2026-02-10T05:11:44.172643",
+    "num_waypoints": 19
+  },
+  "mission_summary": {
+    "total_distance_m": 199.25,
+    "total_distance_km": 0.199,
+    "estimated_duration_s": 96.0,
+    "estimated_duration_min": 1.6,
+    "num_waypoints": 19,
+    "num_inspections": 4,
+    "max_altitude_m": 25
+  },
+  "waypoints": [
+    {
+      "lat": 47.65974,
+      "lon": -122.31675,
+      "altitude_m": 25,
+      "action": "takeoff",
+      "asset_id": null,
+      "notes": "Takeoff from anchor point"
+    },
+    {
+      "lat": 47.65974104926405,
+      "lon": -122.31674735157988,
+      "altitude_m": 25,
+      "action": "transit",
+      "asset_id": "pole_1",
+      "notes": "Transit to pole_1"
+    },
+    {
+      "lat": 47.65974104926405,
+      "lon": -122.31674735157988,
+      "altitude_m": 12,
+      "action": "descend",
+      "asset_id": "pole_1",
+      "notes": "Descend for inspection of pole_1"
+    },
+    {
+      "lat": 47.65974104926405,
+      "lon": -122.31674735157988,
+      "altitude_m": 12,
+      "action": "inspect",
+      "asset_id": "pole_1",
+      "notes": "Inspect pole_1 - utility_pole"
+    },
+    {
+      "lat": 47.65974104926405,
+      "lon": -122.31674735157988,
+      "altitude_m": 25,
+      "action": "ascend",
+      "asset_id": "pole_1",
+      "notes": "Ascend after inspecting pole_1"
+    },
+    {
+      "lat": 47.65977401885866,
+      "lon": -122.31679563133972,
+      "altitude_m": 25,
+      "action": "transit",
+      "asset_id": "pole_2",
+      "notes": "Transit to pole_2"
+    },
+    {
+      "lat": 47.65977401885866,
+      "lon": -122.31679563133972,
+      "altitude_m": 12,
+      "action": "descend",
+      "asset_id": "pole_2",
+      "notes": "Descend for inspection of pole_2"
+    },
+    {
+      "lat": 47.65977401885866,
+      "lon": -122.31679563133972,
+      "altitude_m": 12,
+      "action": "inspect",
+      "asset_id": "pole_2",
+      "notes": "Inspect pole_2 - utility_pole"
+    },
+    {
+      "lat": 47.65977401885866,
+      "lon": -122.31679563133972,
+      "altitude_m": 25,
+      "action": "ascend",
+      "asset_id": "pole_2",
+      "notes": "Ascend after inspecting pole_2"
+    },
+    {
+      "lat": 47.659941576343,
+      "lon": -122.31672924666938,
+      "altitude_m": 25,
+      "action": "transit",
+      "asset_id": "pole_3",
+      "notes": "Transit to pole_3"
+    },
+    {
+      "lat": 47.659941576343,
+      "lon": -122.31672924666938,
+      "altitude_m": 12,
+      "action": "descend",
+      "asset_id": "pole_3",
+      "notes": "Descend for inspection of pole_3"
+    },
+    {
+      "lat": 47.659941576343,
+      "lon": -122.31672924666938,
+      "altitude_m": 12,
+      "action": "inspect",
+      "asset_id": "pole_3",
+      "notes": "Inspect pole_3 - utility_pole"
+    },
+    {
+      "lat": 47.659941576343,
+      "lon": -122.31672924666938,
+      "altitude_m": 25,
+      "action": "ascend",
+      "asset_id": "pole_3",
+      "notes": "Ascend after inspecting pole_3"
+    },
+    {
+      "lat": 47.659967319628024,
+      "lon": -122.31652808100338,
+      "altitude_m": 25,
+      "action": "transit",
+      "asset_id": "pole_4",
+      "notes": "Transit to pole_4"
+    },
+    {
+      "lat": 47.659967319628024,
+      "lon": -122.31652808100338,
+      "altitude_m": 12,
+      "action": "descend",
+      "asset_id": "pole_4",
+      "notes": "Descend for inspection of pole_4"
+    },
+    {
+      "lat": 47.659967319628024,
+      "lon": -122.31652808100338,
+      "altitude_m": 12,
+      "action": "inspect",
+      "asset_id": "pole_4",
+      "notes": "Inspect pole_4 - utility_pole"
+    },
+    {
+      "lat": 47.659967319628024,
+      "lon": -122.31652808100338,
+      "altitude_m": 25,
+      "action": "ascend",
+      "asset_id": "pole_4",
+      "notes": "Ascend after inspecting pole_4"
+    },
+    {
+      "lat": 47.65974,
+      "lon": -122.31675,
+      "altitude_m": 25,
+      "action": "transit",
+      "asset_id": null,
+      "notes": "Return to anchor point"
+    },
+    {
+      "lat": 47.65974,
+      "lon": -122.31675,
+      "altitude_m": 0,
+      "action": "land",
+      "asset_id": null,
+      "notes": "Land at anchor point"
+    }
+  ]
+}

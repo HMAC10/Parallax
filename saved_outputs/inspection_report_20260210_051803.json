@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "report_id": "PARALLAX-20260210-051803",
+    "generated_at": "2026-02-10T05:18:03.105005",
+    "system_version": "PARALLAX v1.0",
+    "ai_model": "NVIDIA Cosmos-Reason2-8B"
+  },
+  "mission": {
+    "location": "Seattle Demo Site - Utility Poles",
+    "date": "2026-02-10 05:18:03",
+    "drone_model": "DJI Mavic 3 Enterprise",
+    "flight_duration": "Simulated",
+    "waypoints": 19,
+    "operator": "PARALLAX Autonomous System"
+  },
+  "analysis": {
+    "thinking": "Analyzing utility pole infrastructure... Checking for damage, corrosion, and vegetation encroachment...",
+    "answer": "3 utility poles inspected. Pole 4 shows moderate vegetation encroachment requiring maintenance within 2-4 weeks.",
+    "raw_output": ""
+  },
+  "assessment": {
+    "overall_status": "WARNING",
+    "total_findings": 3,
+    "critical_count": 0,
+    "warning_count": 1,
+    "info_count": 2
+  },
+  "findings": [
+    {
+      "severity": "WARNING",
+      "description": "Pole 4: Vegetation encroachment detected, tree branches within 1m of power lines"
+    },
+    {
+      "severity": "INFO",
+      "description": "Poles 1-3: Good condition, no immediate issues"
+    },
+    {
+      "severity": "INFO",
+      "description": "All pole structures appear stable with no visible rust or damage"
+    }
+  ]
+}
