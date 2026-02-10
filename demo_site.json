@@ -1,0 +1,40 @@
+{
+  "site_name": "Seattle Demo Site - Utility Poles",
+  "anchor": [47.65974, -122.31675],
+  "default_transit_altitude_m": 25,
+  "default_inspection_altitude_m": 12,
+  "assets": [
+    {
+      "id": "pole_1",
+      "type": "utility_pole",
+      "lat": 47.65974104926405,
+      "lon": -122.31674735157988,
+      "height_m": 12,
+      "notes": "Steel distribution pole"
+    },
+    {
+      "id": "pole_2",
+      "type": "utility_pole",
+      "lat": 47.65977401885866,
+      "lon": -122.31679563133972,
+      "height_m": 12,
+      "notes": "Steel distribution pole"
+    },
+    {
+      "id": "pole_3",
+      "type": "utility_pole",
+      "lat": 47.659941576343,
+      "lon": -122.31672924666938,
+      "height_m": 12,
+      "notes": "Steel distribution pole"
+    },
+    {
+      "id": "pole_4",
+      "type": "utility_pole",
+      "lat": 47.659967319628024,
+      "lon": -122.31652808100338,
+      "height_m": 12,
+      "notes": "Steel distribution pole, partially obscured by tree - vegetation encroachment"
+    }
+  ]
+}
