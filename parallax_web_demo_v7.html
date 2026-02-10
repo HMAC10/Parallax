@@ -38,6 +38,19 @@
             background: linear-gradient(180deg, #1a2a3a 0%, #0a1520 50%, #050a0f 100%);
         }
         
+        /* Vignette effect overlay */
+        #viewer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.7) 100%);
+            z-index: 1;
+        }
+        
         #canvas { width: 100%; height: 100%; }
         
         #hud {
@@ -526,6 +539,26 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             line-height: 1.6;
+            position: relative;
+        }
+        
+        /* Subtle scanline effect */
+        #terminal-output::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 2px,
+                rgba(118, 185, 0, 0.03) 2px,
+                rgba(118, 185, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
         }
         
         #terminal-output::-webkit-scrollbar { width: 6px; }
@@ -574,6 +607,59 @@
             padding: 15px 20px;
             border-top: 1px solid var(--border-subtle);
             background: rgba(0, 0, 0, 0.3);
+        }
+        
+        #command-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+        
+        .suggestion-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .chip-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .command-chip {
+            flex: 1;
+            padding: 8px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            background: rgba(118, 185, 0, 0.1);
+            border: 1px solid var(--nvidia-green-dim);
+            color: var(--nvidia-green);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .command-chip:hover {
+            background: rgba(118, 185, 0, 0.2);
+            border-color: var(--nvidia-green);
+            box-shadow: 0 0 8px rgba(118, 185, 0, 0.3);
+        }
+        
+        .command-chip.chip-danger {
+            background: rgba(232, 108, 0, 0.1);
+            border-color: rgba(232, 108, 0, 0.5);
+            color: var(--warning-orange);
+        }
+        
+        .command-chip.chip-danger:hover {
+            background: rgba(232, 108, 0, 0.2);
+            border-color: var(--warning-orange);
+            box-shadow: 0 0 8px rgba(232, 108, 0, 0.3);
         }
         
         #command-display {
@@ -655,12 +741,29 @@
         }
         
         #nvidia-footer {
-            padding: 12px 20px;
+            padding: 12px 20px 8px;
             border-top: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nvidia-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
             justify-content: center;
+        }
+        
+        .nvidia-footer-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-top: 4px;
         }
         
         .nvidia-tag {
@@ -1012,6 +1115,17 @@
                 <div class="term-line term-white" style="margin-top: 10px;">System initialized. Awaiting command...</div>
             </div>
             <div id="controls-section">
+                <div id="command-suggestions">
+                    <span class="suggestion-label">QUICK COMMANDS:</span>
+                    <div class="chip-row">
+                        <button class="command-chip" onclick="fillCommand('inspect solar panels')">inspect solar panels</button>
+                        <button class="command-chip" onclick="fillCommand('survey power lines')">survey power lines</button>
+                    </div>
+                    <div class="chip-row">
+                        <button class="command-chip" onclick="fillCommand('inspect everything')">inspect everything</button>
+                        <button class="command-chip chip-danger" onclick="fillCommand('crash the drone')">crash the drone</button>
+                    </div>
+                </div>
                 <div id="command-display">
                     <span class="prompt">&gt;</span>
                     <input type="text" id="command-input" placeholder="Type a command..." value="" autocomplete="off">
@@ -1022,13 +1136,17 @@
                 </div>
             </div>
             <div id="nvidia-footer">
-                <span class="nvidia-tag" id="badge-nemotron">NEMOTRON</span>
-                <span class="nvidia-tag" id="badge-nemoguard">NEMOGUARD</span>
-                <span class="nvidia-tag" id="badge-isaac">ISAAC SIM</span>
-                <span class="nvidia-tag" id="badge-cuopt">CUOPT</span>
-                <span class="nvidia-tag" id="badge-vila">COSMOS REASON 2</span>
-                <span class="nvidia-tag" id="badge-omniverse">OMNIVERSE</span>
-                <span class="nvidia-tag" id="badge-brev">BREV</span>
+                <div class="nvidia-badges">
+                    <span class="nvidia-tag" id="badge-nemoguard">NEMOGUARD</span>
+                    <span class="nvidia-tag" id="badge-nemotron">NEMOTRON</span>
+                    <span class="nvidia-tag" id="badge-nim">NIM</span>
+                    <span class="nvidia-tag" id="badge-cuopt">CUOPT</span>
+                    <span class="nvidia-tag" id="badge-isaac">ISAAC SIM</span>
+                    <span class="nvidia-tag" id="badge-omniverse">OMNIVERSE</span>
+                    <span class="nvidia-tag" id="badge-vila">COSMOS REASON 2</span>
+                    <span class="nvidia-tag" id="badge-brev">BREV</span>
+                </div>
+                <div class="nvidia-footer-text">Powered by NVIDIA AI Stack</div>
             </div>
         </div>
     </div>
@@ -1051,14 +1169,14 @@
                 <div id="report-findings-list"></div>
             </div>
             <div class="report-section">
-                <h4>Exported Files</h4>
-                <div class="export-file">PAR-2026-0204-001_waypoints.json</div>
-                <div class="export-file">PAR-2026-0204-001_litchi.csv</div>
-                <div class="export-file">PAR-2026-0204-001_dji_sdk.json</div>
+                <h4>Exported Flight Plan Files</h4>
+                <div class="export-file">PAR-2026-0204-001_waypoints.json <span style="color: var(--text-dim); font-size: 9px;">(JSON format)</span></div>
+                <div class="export-file">PAR-2026-0204-001_litchi.csv <span style="color: var(--text-dim); font-size: 9px;">(Litchi CSV)</span></div>
+                <div class="export-file">PAR-2026-0204-001_dji_sdk.json <span style="color: var(--text-dim); font-size: 9px;">(DJI SDK)</span></div>
             </div>
             <div class="report-footer">
                 <div class="nvidia-stack">
-                    <span>Nemotron</span><span>NeMoGuard</span><span>Isaac Sim</span><span>cuOpt</span><span>Cosmos Reason 2</span><span>Omniverse</span><span>Brev</span>
+                    <span>NeMoGuard</span><span>Nemotron</span><span>NIM</span><span>cuOpt</span><span>Isaac Sim</span><span>Omniverse</span><span>Cosmos Reason 2</span><span>Brev</span>
                 </div>
                 <div class="report-btn-row">
                     <button class="report-btn report-btn-primary" id="export-btn" onclick="exportFlightPlan()">
@@ -1091,6 +1209,8 @@
         let simulationSpeed = 1.0;
         let currentMissionWaypoints = [];
         let missionMode = 'full'; // 'full', 'solar', 'power'
+        let gridMaterial;
+        let parsedCommand = null;
         
         // Base waypoints for takeoff and landing
         const baseWaypointsStart = [
@@ -1130,21 +1250,14 @@
             { x: 10, y: 3.5, z: 0, action: "fly", label: "Return from solar" },
         ];
         
-        // Power line inspection waypoints
+        // Power line inspection waypoints - EXACT same as "inspect everything" uses
         const powerWaypoints = [
-            { x: 10, y: 3.5, z: 0, action: "fly", label: "Transit to power corridor" },
-            { x: 17, y: 6, z: 2, action: "fly", label: "Climb for transit" },
-            { x: 22, y: 7, z: 0, action: "fly", label: "Approach fence" },
-            { x: 26, y: 8, z: 0, action: "fly", label: "Clear security fence" },
-            { x: 29, y: 12, z: 0, action: "fly", label: "Climb above power lines" },
+            { x: 32, y: 12, z: -5, action: "fly", label: "Direct transit to Pole 1" },
             { x: 32, y: 12, z: -5, action: "inspect", label: "Pole 1", poleIndex: 0 },
             { x: 32, y: 12, z: -1.5, action: "inspect", label: "Pole 2", poleIndex: 1, finding: { type: "Corrosion detected", severity: "low" } },
             { x: 32, y: 12, z: 2, action: "inspect", label: "Pole 3", poleIndex: 2 },
             { x: 32, y: 12, z: 5.5, action: "inspect", label: "Pole 4", poleIndex: 3 },
-            { x: 29, y: 12, z: 0, action: "fly", label: "Depart power lines" },
-            { x: 26, y: 8, z: 0, action: "fly", label: "Re-cross fence" },
-            { x: 20, y: 5, z: 0, action: "fly", label: "Return transit" },
-            { x: 10, y: 3.5, z: 0, action: "fly", label: "Approach warehouse" },
+            { x: 10, y: 3.5, z: 0, action: "fly", label: "Direct return to warehouse" },
         ];
         
         // Full mission (combined) - legacy reference
@@ -1322,19 +1435,13 @@
             
             if (mode === 'full') {
                 waypoints = waypoints.concat(solarWaypoints);
-                // Add transition to power lines
-                waypoints.push({ x: 17, y: 6, z: 2, action: "fly", label: "Climb for transit" });
-                waypoints.push({ x: 22, y: 7, z: 0, action: "fly", label: "Approach fence" });
-                waypoints.push({ x: 26, y: 8, z: 0, action: "fly", label: "Clear security fence" });
-                waypoints.push({ x: 29, y: 12, z: 0, action: "fly", label: "Climb above power lines" });
+                // Direct transition to power lines
+                waypoints.push({ x: 32, y: 12, z: -5, action: "fly", label: "Direct transit to Pole 1" });
                 waypoints.push({ x: 32, y: 12, z: -5, action: "inspect", label: "Pole 1", poleIndex: 0 });
                 waypoints.push({ x: 32, y: 12, z: -1.5, action: "inspect", label: "Pole 2", poleIndex: 1, finding: { type: "Corrosion detected", severity: "low" } });
                 waypoints.push({ x: 32, y: 12, z: 2, action: "inspect", label: "Pole 3", poleIndex: 2 });
                 waypoints.push({ x: 32, y: 12, z: 5.5, action: "inspect", label: "Pole 4", poleIndex: 3 });
-                waypoints.push({ x: 29, y: 12, z: 0, action: "fly", label: "Depart power lines" });
-                waypoints.push({ x: 26, y: 8, z: 0, action: "fly", label: "Re-cross fence" });
-                waypoints.push({ x: 20, y: 5, z: 0, action: "fly", label: "Return transit" });
-                waypoints.push({ x: 10, y: 3.5, z: 0, action: "fly", label: "Approach warehouse" });
+                waypoints.push({ x: 10, y: 3.5, z: 0, action: "fly", label: "Direct return to warehouse" });
             } else if (mode === 'solar') {
                 waypoints = waypoints.concat(solarWaypoints);
             } else if (mode === 'power') {
@@ -1360,6 +1467,13 @@
             setTimeout(() => {
                 overlay.classList.remove('active');
             }, 2500);
+        }
+        
+        // Fill command input from chip click
+        function fillCommand(command) {
+            const input = document.getElementById('command-input');
+            input.value = command;
+            input.focus();
         }
         
         // Handle enter key in command input
@@ -1427,13 +1541,16 @@
             gridTexture.wrapT = THREE.RepeatWrapping;
             gridTexture.repeat.set(20, 20);
             
+            // Store material for pulsing animation
+            gridMaterial = new THREE.MeshBasicMaterial({ 
+                map: gridTexture,
+                transparent: true,
+                opacity: 0.4
+            });
+            
             const ground = new THREE.Mesh(
                 new THREE.PlaneGeometry(200, 200),
-                new THREE.MeshBasicMaterial({ 
-                    map: gridTexture,
-                    transparent: true,
-                    opacity: 0.8
-                })
+                gridMaterial
             );
             ground.rotation.x = -Math.PI / 2;
             scene.add(ground);
@@ -1964,6 +2081,11 @@
                 dustParticles.geometry.attributes.position.needsUpdate = true;
             }
             
+            // Pulsing grid effect
+            if (gridMaterial) {
+                gridMaterial.opacity = 0.3 + Math.sin(time * 0.8) * 0.2;
+            }
+            
             if (!isRunning) {
                 const orbitTime = time * 0.05;
                 camera.position.x = 20 + Math.sin(orbitTime) * 25;
@@ -1981,10 +2103,21 @@
                 
                 pipCamera.position.copy(drone.position);
                 pipCamera.position.y -= 0.1;
-                // Look down and slightly forward
+                
+                // Camera angle depends on current action
                 const lookTarget = drone.position.clone();
-                lookTarget.y -= 5;
-                lookTarget.z += 2;
+                const currentWp = currentMissionWaypoints[currentWaypointIndex];
+                const isInspecting = currentWp && currentWp.action === 'inspect';
+                
+                if (isInspecting) {
+                    // Point straight down during inspection (gimbal pitch -90°)
+                    lookTarget.y -= 10;
+                } else {
+                    // Angle forward during transit
+                    lookTarget.y -= 5;
+                    lookTarget.z += 2;
+                }
+                
                 pipCamera.lookAt(lookTarget);
                 pipRenderer.render(scene, pipCamera);
                 
@@ -1998,7 +2131,7 @@
             
             const input = document.getElementById('command-input');
             const userCommand = input.value.trim() || 'inspect solar panels and power lines for damage';
-            const parsedCommand = parseUserCommand(userCommand);
+            parsedCommand = parseUserCommand(userCommand);
             
             // Check for rejected commands
             if (parsedCommand.mode === 'rejected') {
@@ -2044,22 +2177,24 @@
             addTerminalLine(`  "${userCommand}"`, 'success');
             await sleep(400);
             
-            // Phase 0: Safety Validation
+            // Phase 0: NeMoGuard Safety Validation
             addTerminalLine('', 'white');
-            addTerminalLine('═══ PHASE 0: SAFETY VALIDATION ═══', 'header');
+            addTerminalLine('═══ PHASE 0: NEMOGUARD (SAFETY VALIDATION) ═══', 'header');
             setBadgeActive('badge-nemoguard');
-            addTerminalLine('⟳ NeMoGuard - Validating command...', 'dim');
+            addTerminalLine('⟳ NeMoGuard - Validating command safety...', 'dim');
             await sleep(600);
             addTerminalLine('✓ Keyword check: PASSED', 'success');
             await sleep(300);
             addTerminalLine('✓ NeMoGuard AI check: SAFE', 'success');
             addTerminalLine('✓ Command approved for execution', 'success');
             
-            // Phase 1: NLP Processing - show parsed results
+            // Phase 1: Nemotron via NIM (NLP Parsing)
             await sleep(400);
-            addTerminalLine('═══ PHASE 1: NLP PROCESSING ═══', 'header');
+            addTerminalLine('═══ PHASE 1: NEMOTRON VIA NIM (NLP PARSING) ═══', 'header');
             setBadgeActive('badge-nemotron');
-            addTerminalLine('⟳ Nemotron - Parsing natural language...', 'dim');
+            await sleep(300);
+            setBadgeActive('badge-nim');
+            addTerminalLine('⟳ Nemotron via NIM - Parsing natural language...', 'dim');
             await sleep(800);
             addTerminalLine('✓ Model: nemotron-mini-4b-instruct', 'success');
             addTerminalLine(`  Action: ${parsedCommand.action.toUpperCase()}`, 'white');
@@ -2082,7 +2217,16 @@
             await sleep(400);
             addTerminalLine('⟳ Calculating mission requirements...', 'dim');
             await sleep(500);
-            addTerminalLine('  Estimated Distance: 174.2m', 'white');
+            
+            // Get distance from optData to match Phase 2
+            const optDataForDistance = {
+                'solar': { initial: '150.7m' },
+                'power': { initial: '168.8m' },
+                'full': { initial: '352.1m' }
+            };
+            const estimatedDistance = optDataForDistance[parsedCommand.mode]?.initial || '352.1m';
+            
+            addTerminalLine(`  Estimated Distance: ${estimatedDistance}`, 'white');
             addTerminalLine('  Estimated Duration: 4.2 min', 'white');
             addTerminalLine('  Battery Required: 8%', 'white');
             await sleep(300);
@@ -2121,28 +2265,40 @@
             
             addTerminalLine(`✓ ${missionWaypoints.length} waypoints plotted`, 'success');
             
-            // Phase 2: cuOpt Optimization (with visual)
+            // Phase 2: cuOpt Route Optimization
             await sleep(400);
-            addTerminalLine('═══ PHASE 2: PATH OPTIMIZATION ═══', 'header');
+            addTerminalLine('═══ PHASE 2: CUOPT (ROUTE OPTIMIZATION) ═══', 'header');
             setBadgeActive('badge-cuopt');
-            addTerminalLine('⟳ cuOpt - Analyzing path efficiency...', 'dim');
+            addTerminalLine('⟳ cuOpt - Optimizing waypoint sequence...', 'dim');
             await sleep(500);
-            addTerminalLine('  Initial path distance: 174.2m', 'white');
-            addTerminalLine('  Redundant segments: 12', 'white');
+            
+            // Get optimization data based on mission mode
+            const optData = {
+                'solar': { initial: '150.7m', optimized: '110m', improvement: '27%', segments: 12 },
+                'power': { initial: '168.8m', optimized: '130m', improvement: '23%', segments: 8 },
+                'full': { initial: '352.1m', optimized: '250m', improvement: '29%', segments: 18 }
+            };
+            const opt = optData[parsedCommand.mode] || optData['full'];
+            opt.waypoints = missionWaypoints.length;
+            
+            addTerminalLine(`  Initial path distance: ${opt.initial}`, 'white');
+            addTerminalLine(`  Redundant segments: ${opt.segments}`, 'white');
             await sleep(400);
             addTerminalLine('⟳ cuOpt - Optimizing route...', 'dim');
             
             // Animate waypoints shifting to optimized positions
             await animateOptimization();
             
-            addTerminalLine('✓ Optimized distance: 127.1m', 'success');
-            addTerminalLine('✓ Improvement: 27% shorter path', 'success');
+            addTerminalLine(`✓ Optimized distance: ${opt.optimized}`, 'success');
+            addTerminalLine(`✓ Improvement: ${opt.improvement} shorter path`, 'success');
             
-            // Phase 3: Path Validation
+            // Phase 3: Isaac Sim via Omniverse (Flight Validation)
             await sleep(400);
-            addTerminalLine('═══ PHASE 3: PATH VALIDATION ═══', 'header');
+            addTerminalLine('═══ PHASE 3: ISAAC SIM VIA OMNIVERSE ═══', 'header');
             setBadgeActive('badge-isaac');
-            addTerminalLine('⟳ Isaac Sim - Initializing simulation...', 'dim');
+            await sleep(300);
+            setBadgeActive('badge-omniverse');
+            addTerminalLine('⟳ Isaac Sim via Omniverse - Initializing digital twin...', 'dim');
             await sleep(500);
             addTerminalLine('✓ Physics engine: ACTIVE', 'success');
             addTerminalLine('✓ Collision detection: ACTIVE', 'success');
@@ -2511,13 +2667,13 @@
             document.getElementById('start-btn').disabled = false;
             
             addTerminalLine('', 'white');
-            addTerminalLine('═══ PHASE 4: VISION ANALYSIS ═══', 'header');
+            addTerminalLine('═══ PHASE 4: COSMOS REASON 2 (VISION ANALYSIS) ═══', 'header');
             setBadgeActive('badge-vila');
             addTerminalLine(`✓ Cosmos Reason 2 analyzed ${currentMissionWaypoints.filter(w => w.action === 'inspect').length} inspection points`, 'success');
             addTerminalLine(`✓ ${findings.length} issues detected`, findings.length > 0 ? 'warning' : 'success');
             
             addTerminalLine('', 'white');
-            addTerminalLine('═══ PHASE 5: EXPORT ═══', 'header');
+            addTerminalLine('═══ PHASE 5: EXPORT FLIGHT PLAN ═══', 'header');
             setBadgeActive(null);
             addTerminalLine('✓ PAR-2026-0204-001_waypoints.json', 'success');
             addTerminalLine('✓ PAR-2026-0204-001_litchi.csv', 'success');
@@ -2528,8 +2684,20 @@
             addTerminalLine('   ✅ PATH VALIDATED & EXPORTED', 'success');
             addTerminalLine('════════════════════════════════════', 'success');
             
-            document.getElementById('report-waypoints').textContent = missionWaypoints.length;
-            document.getElementById('report-distance').textContent = `${Math.round(distanceTraveled)}m`;
+            // Get optimization data for report
+            const optData = {
+                'solar': { initial: '150.7m', optimized: '110m', improvement: '27%', segments: 12 },
+                'power': { initial: '168.8m', optimized: '130m', improvement: '23%', segments: 8 },
+                'full': { initial: '352.1m', optimized: '250m', improvement: '29%', segments: 18 }
+            };
+            const opt = optData[parsedCommand.mode] || optData['full'];
+            opt.waypoints = currentMissionWaypoints.length;
+            
+            // Update DST in progress bar to match optimized distance
+            document.getElementById('distance-status').textContent = opt.optimized;
+            
+            document.getElementById('report-waypoints').textContent = opt.waypoints;
+            document.getElementById('report-distance').textContent = opt.optimized;
             document.getElementById('report-collisions').textContent = '0';
             document.getElementById('report-findings').textContent = findings.length;
             
@@ -2711,6 +2879,13 @@
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
+        
+        // Expose functions to global scope for onclick handlers
+        window.startMission = startMission;
+        window.resetMission = resetMission;
+        window.fillCommand = fillCommand;
+        window.closeReport = closeReport;
+        window.exportFlightPlan = exportFlightPlan;
         
         window.onload = init;
     </script>
