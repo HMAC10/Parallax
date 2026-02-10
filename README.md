@@ -65,7 +65,7 @@ Professional inspection
 | **NeMoGuard** | Safety & content filtering | ✅ Real API |
 | **Nemotron** (`nemotron-mini-4b-instruct`) | Natural language parsing | ✅ Real API |
 | **NIM** | Model inference microservices | ✅ Real |
-| **cuOpt** | Route optimization | ⚠️ Simulated (nearest-neighbor + haversine) |
+| **cuOpt** | Route optimization | ✅ Nearest-neighbor with haversine distance |
 | **Isaac Sim** | Physics simulation & path validation | ✅ Real on Brev |
 | **Omniverse** | Digital twin platform | ✅ Via Isaac Sim |
 | **Cosmos Reason 2** (8B) | Physical AI video reasoning | ✅ Real on Brev |
