@@ -48,21 +48,24 @@ your answer
 </answer>"""
     
     # Infrastructure inspection prompt template
-    INFRASTRUCTURE_INSPECTION_PROMPT = """Analyze this infrastructure inspection footage/image and provide a detailed assessment.
+    INFRASTRUCTURE_INSPECTION_PROMPT = """You are analyzing aerial drone inspection footage of urban utility poles in Seattle, WA.
 
-Identify and report on:
-1. Equipment Condition: Overall state of visible equipment and structures
-2. Damage/Corrosion/Wear: Any signs of deterioration, rust, cracks, or wear
-3. Safety Hazards: Potential risks or dangerous conditions
-4. Vegetation Encroachment: Plants or trees interfering with infrastructure
-5. Overall Assessment: Summary with severity rating
+This footage shows a sequential inspection of 4 utility poles along a city block. Analyze EACH pole individually.
 
-For each finding, assign a severity level:
-- CRITICAL: Immediate action required, safety risk
-- WARNING: Needs attention soon, potential for deterioration
-- INFO: Note for records, no immediate action needed
+For EACH pole visible in the footage, report:
+1. Pole ID (Pole 1, Pole 2, etc. in order of appearance)
+2. Pole Condition: Surface condition, rust, corrosion, leaning, paint condition
+3. Hardware & Connections: State of light fixtures, wire attachments, mounting brackets
+4. Vegetation Encroachment: Any trees or branches within 3 feet of the pole or wires
+5. Surrounding Hazards: Nearby construction, obstructions, or safety concerns
+6. Severity Rating: CRITICAL / WARNING / INFO
 
-Be specific about locations, quantities, and severity of any issues found."""
+Pay special attention to:
+- Vegetation growing near or touching poles and wires (this is a common and serious issue)
+- Condition of wire attachment points and insulators
+- Any poles that appear to be leaning or damaged
+
+Provide findings for EACH pole separately, then give an overall site assessment."""
     
     def __init__(
         self,

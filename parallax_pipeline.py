@@ -490,11 +490,20 @@ def phase5_deployment(mission: Dict[str, Any], footage_path: str) -> Tuple[Dict[
     
     start_time = time.time()
     
-    print(f"Mission waypoints loaded to drone controller...")
-    time.sleep(0.8)
+    print(f"Connecting to drone controller...", end='', flush=True)
+    time.sleep(2.0)
+    print(f" {Colors.GREEN}OK{Colors.RESET}")
     
-    print(f"Executing autonomous inspection flight path...")
-    time.sleep(1.0)
+    print(f"Uploading mission waypoints...", end='', flush=True)
+    time.sleep(2.0)
+    print(f" {Colors.GREEN}OK{Colors.RESET}")
+    
+    print(f"Pre-flight systems check...", end='', flush=True)
+    time.sleep(2.0)
+    print(f" {Colors.GREEN}OK{Colors.RESET}")
+    
+    print(f"Launching autonomous inspection flight...")
+    time.sleep(2.0)
     
     # Get asset names from mission
     assets = mission.get('assets', [])
@@ -503,26 +512,25 @@ def phase5_deployment(mission: Dict[str, Any], footage_path: str) -> Tuple[Dict[
     for asset in assets:
         asset_name = asset.get('id', 'unknown_asset')
         print(f"Inspecting {asset_name}...", end='', flush=True)
-        time.sleep(0.6)
-        print(f" {Colors.GREEN}done{Colors.RESET}")
+        time.sleep(2.0)
+        print(f" {Colors.GREEN}captured{Colors.RESET}")
     
-    print(f"\nFlight complete.", end='')
-    time.sleep(0.4)
+    print(f"Returning to home point...")
+    time.sleep(2.0)
     
     # Get actual footage file size if provided
     if footage_path:
         footage_file = Path(footage_path)
         if footage_file.exists():
             file_size_mb = footage_file.stat().st_size / (1024 * 1024)
-            print(f" Footage captured: {file_size_mb:.1f} MB")
+            print(f"Flight complete. Footage captured: {file_size_mb:.1f}MB")
         else:
-            print(f" Footage captured: {footage_path}")
+            print(f"Flight complete. Footage captured: {footage_path}")
     else:
-        print()
+        print(f"Flight complete.")
     
-    time.sleep(0.5)
     print(f"Transferring footage for analysis...")
-    time.sleep(0.7)
+    time.sleep(1.0)
     
     duration = time.time() - start_time
     
