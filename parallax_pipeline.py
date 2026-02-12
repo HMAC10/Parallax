@@ -11,7 +11,8 @@ Pipeline Flow:
   Phase 2: cuOpt Route Optimization
   Phase 3: Isaac Sim Validation (Omniverse)
   Phase 4: Export Flight Plan
-  Phase 5: Cosmos Reason 2 Vision Analysis
+  Phase 5: Drone Deployment
+  Phase 6: Cosmos Reason 2 Vision Analysis
 
 Usage:
     python parallax_pipeline.py --command "inspect poles 1 through 4" --site demo_site.json
@@ -468,9 +469,77 @@ def phase4_export(mission: Dict[str, Any], site_config, output_dir: str) -> Tupl
     return results, duration
 
 
-def phase5_cosmos(footage_path: str, use_mock: bool, output_dir: str) -> Tuple[Dict[str, Any], float]:
+def phase5_deployment(mission: Dict[str, Any], footage_path: str) -> Tuple[Dict[str, Any], float]:
     """
-    Phase 5: Cosmos Reason 2 Vision Analysis
+    Phase 5: Drone Deployment
+    
+    Simulates uploading flight plan to drone and executing autonomous mission.
+    
+    Args:
+        mission: Mission dictionary with assets
+        footage_path: Path to footage file (or None)
+        
+    Returns:
+        Tuple of (deployment_results, duration_seconds)
+    """
+    # Skip this phase if no footage is provided
+    if not footage_path:
+        return {}, 0.0
+    
+    print_phase_header(5, "Drone Deployment")
+    
+    start_time = time.time()
+    
+    print(f"Mission waypoints loaded to drone controller...")
+    time.sleep(0.8)
+    
+    print(f"Executing autonomous inspection flight path...")
+    time.sleep(1.0)
+    
+    # Get asset names from mission
+    assets = mission.get('assets', [])
+    
+    # Simulate inspecting each asset
+    for asset in assets:
+        asset_name = asset.get('id', 'unknown_asset')
+        print(f"Inspecting {asset_name}...", end='', flush=True)
+        time.sleep(0.6)
+        print(f" {Colors.GREEN}done{Colors.RESET}")
+    
+    print(f"\nFlight complete.", end='')
+    time.sleep(0.4)
+    
+    # Get actual footage file size if provided
+    if footage_path:
+        footage_file = Path(footage_path)
+        if footage_file.exists():
+            file_size_mb = footage_file.stat().st_size / (1024 * 1024)
+            print(f" Footage captured: {file_size_mb:.1f} MB")
+        else:
+            print(f" Footage captured: {footage_path}")
+    else:
+        print()
+    
+    time.sleep(0.5)
+    print(f"Transferring footage for analysis...")
+    time.sleep(0.7)
+    
+    duration = time.time() - start_time
+    
+    print(f"\n{Colors.GREEN}[OK] Deployment complete — footage ready for analysis{Colors.RESET}")
+    print(f"Duration: {duration:.2f}s")
+    
+    results = {
+        "assets_inspected": len(assets),
+        "footage_path": footage_path,
+    }
+    
+    return results, duration
+
+
+def phase6_cosmos(footage_path: str, use_mock: bool, output_dir: str) -> Tuple[Dict[str, Any], float]:
+    """
+    Phase 6: Cosmos Reason 2 Vision Analysis
     
     Analyzes drone footage using NVIDIA Cosmos Reason 2.
     
@@ -482,7 +551,7 @@ def phase5_cosmos(footage_path: str, use_mock: bool, output_dir: str) -> Tuple[D
     Returns:
         Tuple of (analysis_results, duration_seconds)
     """
-    print_phase_header(5, "Cosmos Reason 2 Vision Analysis (Hugging Face)")
+    print_phase_header(6, "Cosmos Reason 2 Vision Analysis (Hugging Face)")
     
     start_time = time.time()
     
@@ -591,7 +660,7 @@ def phase5_cosmos(footage_path: str, use_mock: bool, output_dir: str) -> Tuple[D
             desc = finding.get("description", "")
             
             color = Colors.RED if severity == "CRITICAL" else Colors.YELLOW if severity == "WARNING" else Colors.RESET
-            print(f"  {color}* [{severity}]{Colors.RESET} {desc[:80]}")
+            print(f"  {color}* [{severity}]{Colors.RESET} {desc[:120]}")
     
     if md_path and json_path:
         print(f"\nReports Generated:")
@@ -784,9 +853,17 @@ For more information, visit: https://github.com/your-repo/parallax
         
         time.sleep(0.8)
         
-        # Phase 5: Cosmos Reason 2 Vision Analysis
-        cosmos_results, duration = phase5_cosmos(args.footage, args.mock, args.output)
-        phase_durations["Phase 5: Cosmos"] = duration
+        # Phase 5: Drone Deployment
+        deployment_results, duration = phase5_deployment(mission, args.footage)
+        if args.footage:
+            phase_durations["Phase 5: Deployment"] = duration
+        
+        if args.footage:
+            time.sleep(0.8)
+        
+        # Phase 6: Cosmos Reason 2 Vision Analysis
+        cosmos_results, duration = phase6_cosmos(args.footage, args.mock, args.output)
+        phase_durations["Phase 6: Cosmos"] = duration
         
         time.sleep(1.0)
         

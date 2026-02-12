@@ -279,8 +279,8 @@ class InspectionReportGenerator:
         # Extract data with defaults
         location = mission_metadata.get("location", "Unknown Location")
         flight_date = mission_metadata.get("date", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        drone_model = mission_metadata.get("drone_model", "Unknown Model")
-        flight_duration = mission_metadata.get("flight_duration", "N/A")
+        drone_model = mission_metadata.get("drone_model", "DJI Mini 2")
+        flight_duration = mission_metadata.get("flight_duration", "Autonomous Waypoint Mission")
         waypoints = mission_metadata.get("waypoints", [])
         waypoints_count = len(waypoints) if isinstance(waypoints, list) else waypoints
         operator = mission_metadata.get("operator", "Autonomous")
@@ -452,8 +452,8 @@ def generate_quick_report(
     metadata = {
         "location": location,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "drone_model": "DJI Mavic 3 Enterprise",
-        "flight_duration": "N/A",
+        "drone_model": "DJI Mini 2",
+        "flight_duration": "Autonomous Waypoint Mission",
         "waypoints": 0,
     }
     
