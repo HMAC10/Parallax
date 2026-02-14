@@ -101,6 +101,7 @@ dmypy.json
 captures/
 images/
 output/
+saved_outputs/
 
 # Simulation data
 sim_data/
