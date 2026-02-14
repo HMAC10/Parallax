@@ -26,7 +26,7 @@
 
 > 🎥 **[Full Pipeline Run (Uncut) →](https://youtu.be/kz-XgTp6oP4)**
 >
-> Unedited terminal recording of the complete 7-phase pipeline executing on an NVIDIA L40S GPU.
+> Unedited terminal recording of the complete 7-phase pipeline executing on an NVIDIA L40S GPU using Brev.
 
 > 🖥️ **[Try the Interactive 3D Demo →](https://hmac10.github.io/Parallax/web_demo.html)**
 >
