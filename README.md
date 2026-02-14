@@ -20,7 +20,7 @@
 
 ## Demo Videos
 
-> 🎬 **[Watch the Full Demo →]([https://youtu.be/T9DzC8LJAPA])**
+> 🎬 **[Watch the Full Demo →](https://youtu.be/T9DzC8LJAPA)**
 >
 > Watch PARALLAX plan, simulate, and execute a real utility pole inspection in Seattle, WA — from a single English command to an AI-generated inspection report.
 
