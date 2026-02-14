@@ -28,7 +28,7 @@
 >
 > Unedited terminal recording of the complete 7-phase pipeline executing on an NVIDIA L40S GPU.
 
-> 🖥️ **[Try the Interactive 3D Demo →](web_demo.html)**
+> 🖥️ **[Try the Interactive 3D Demo →](https://hmac10.github.io/Parallax/web_demo.html)**
 >
 > Interactive 3D visualization of the flight path planning. Uses simulated data for demonstration — no live API calls or GPU required. Clone the repo and open in your browser.
 
