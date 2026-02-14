@@ -102,7 +102,7 @@ Model weights: [nvidia/Cosmos-Reason2-8B](https://huggingface.co/nvidia/Cosmos-R
 
 PARALLAX was tested on **real infrastructure in Seattle, WA**.
 
-Four utility poles were pre-mapped with GPS coordinates. The pipeline generated a validated **19-waypoint flight plan** covering **199 meters**. A **DJI Mini 2** captured inspection footage which was analyzed by **Cosmos Reason 2** running on an NVIDIA L40S GPU.
+Four utility poles were pre-mapped with GPS coordinates. The pipeline generated a validated **19-waypoint flight plan**. A **DJI Mini 2** captured inspection footage which was analyzed by **Cosmos Reason 2** running on an NVIDIA L40S GPU.
 
 **Results:**
 - Cosmos identified **all 4 poles individually** using chain-of-thought reasoning
