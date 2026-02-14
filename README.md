@@ -199,6 +199,5 @@ PARALLAX was born from a real problem encountered building Voltair - the drone i
 
 <p align="center">
   <a href="https://github.com/HMAC10">GitHub</a> •
-  <a href="#">Demo Video</a> •
   <a href="https://www.linkedin.com/in/hunter-mckay">LinkedIn</a>
 </p>
