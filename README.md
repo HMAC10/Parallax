@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/parallax_banner.png" alt="PARALLAX Banner" width="700"/>
+  <img src="assets/parallax_banner.jpg" alt="PARALLAX Banner" width="700"/>
 </p>
 
 <h3 align="center">Digital Twin Ground Control — Test Before You Fly</h3>
@@ -34,7 +34,7 @@
 
 ## The Problem
 
-I co-founded [Voltair](https://github.com/HMAC10), an AI drone infrastructure startup, and hit a wall that every drone operator faces: **the intelligence gap.**
+I co-founded [Voltair](https://www.geekwire.com/2025/self-charging-drones-for-power-line-inspections-land-top-prize-at-uw-enviro-innovation-contest/), an AI drone infrastructure startup, and hit a wall that every drone operator faces: **the intelligence gap.**
 
 The hardware is incredible — modern drones fly autonomously for 40+ minutes with centimeter-level GPS accuracy. But commanding them? Still stuck in 2015:
 
@@ -44,7 +44,7 @@ The hardware is incredible — modern drones fly autonomously for 40+ minutes wi
 - One bad flight plan can **crash a $10,000 drone in seconds**
 - If anything changes on site, you're **starting from scratch**
 
-This doesn't scale. The US alone has **180 million utility poles**, **600,000 bridges**, and **3.5 million miles of power lines** that need regular inspection. The bottleneck isn't the drone — it's the brain.
+This doesn't scale. The US alone has **180 million utility poles**, **600,000 bridges**, and **3.5 million miles of power lines** that need regular inspection. The bottleneck isn't the drone, it's the brain.
 
 **PARALLAX is the brain I wished we had at Voltair.**
 
@@ -62,7 +62,7 @@ That's it. One command triggers a complete autonomous inspection pipeline:
   <img src="assets/pipeline.jpg" alt="PARALLAX Pipeline" width="500"/>
 </p>
 
-**The key differentiator: PARALLAX simulates every mission before the drone leaves the ground.** Isaac Sim validates the entire flight path in a physics-accurate digital twin — checking collisions, altitude clearance, no-fly zones, and battery feasibility. If anything fails, the mission is rejected before you risk any hardware.
+**The key differentiator: PARALLAX simulates every mission before the drone leaves the ground.** Isaac Sim validates the entire flight path in a physics-accurate digital twin: checking collisions, altitude clearance, no-fly zones, and battery feasibility. If anything fails, the mission is rejected before you risk any hardware.
 
 ### Pipeline Phases
 
@@ -111,7 +111,7 @@ Four utility poles were pre-mapped with GPS coordinates. The pipeline generated 
 - Generated a complete inspection report with severity ratings and recommended actions
 
 <p align="center">
-  <img src="assets/litchi_waypoints.png" alt="Litchi Waypoint Map" width="600"/>
+  <img src="assets/litchi_waypoints.jpg" alt="Litchi Waypoint Map" width="600"/>
   <br/>
   <em>GPS waypoints exported to Litchi Mission Hub — real satellite imagery of the inspection site</em>
 </p>
@@ -185,7 +185,7 @@ The long-term vision: any utility worker, construction manager, or insurance adj
 
 Built by **Hunter McKay** — University of Washington Foster School of Business senior (Finance & Information Systems, 3.98 GPA). Co-founded Voltair, an AI drone infrastructure startup that won the **$25K Dempsey Startup Competition** (1st of 174 teams) and **$15K Environmental Innovation Challenge**.
 
-PARALLAX was born from a real problem encountered building Voltair — the drone industry has incredible hardware but lacks the AI brain to make autonomous inspection accessible to everyone.
+PARALLAX was born from a real problem encountered building Voltair - the drone industry has incredible hardware but lacks the AI brain to make autonomous inspection accessible to everyone.
 
 ---
 
@@ -194,7 +194,7 @@ PARALLAX was born from a real problem encountered building Voltair — the drone
 </p>
 
 <p align="center">
-  <a href="https://github.com/HMAC10/Parallax">GitHub</a> •
+  <a href="https://github.com/HMAC10">GitHub</a> •
   <a href="#">Demo Video</a> •
   <a href="https://www.linkedin.com/in/huntermckay">LinkedIn</a>
 </p>
