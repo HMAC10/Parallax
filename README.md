@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/parallax_banner.jpg" alt="PARALLAX Banner" width="700"/>
+  <img src="assets/parallax_banner2.jpg" alt="PARALLAX Banner" width="700"/>
 </p>
 
 <h3 align="center">Digital Twin Ground Control — Test Before You Fly</h3>
