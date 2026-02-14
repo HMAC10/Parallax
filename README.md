@@ -159,7 +159,7 @@ report_generator.py       Inspection report generator (Markdown + JSON)
 site_config.py            Site configuration with GPS asset mapping
 export_waypoints.py       Waypoint exporter (Litchi CSV, JSON, DJI SDK)
 demo_site.json            Real site config: 4 utility poles in Seattle
-parallax_web_demo_v7.html Interactive 3D flight path visualization (Three.js)
+web_demo.html             Interactive 3D flight path visualization (Three.js)
 ```
 
 ---
