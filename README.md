@@ -194,10 +194,6 @@ PARALLAX was born from a real problem encountered building Voltair - the drone i
 ---
 
 <p align="center">
-  Built for <strong>NVIDIA GTC 2026 Golden Ticket Contest</strong> & <strong>NVIDIA Cosmos Cookoff Hackathon</strong>
-</p>
-
-<p align="center">
   <a href="https://github.com/HMAC10">GitHub</a> •
   <a href="https://www.linkedin.com/in/hunter-mckay">LinkedIn</a>
 </p>
