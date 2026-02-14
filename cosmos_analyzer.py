@@ -141,13 +141,13 @@ Provide findings for EACH pole separately, then give an overall site assessment.
         Returns:
             Dictionary with 'thinking' and 'answer' keys
         """
-        # Extract thinking section
-        think_match = re.search(r'<think>(.*?)</think>', text, re.DOTALL | re.IGNORECASE)
-        thinking = think_match.group(1).strip() if think_match else ""
+        # Extract thinking section (use findall + get LAST match to skip system prompt template)
+        think_matches = re.findall(r'<think>(.*?)</think>', text, re.DOTALL | re.IGNORECASE)
+        thinking = think_matches[-1].strip() if think_matches else ""
         
-        # Extract answer section
-        answer_match = re.search(r'<answer>(.*?)</answer>', text, re.DOTALL | re.IGNORECASE)
-        answer = answer_match.group(1).strip() if answer_match else text.strip()
+        # Extract answer section (use findall + get LAST match to skip system prompt template)
+        answer_matches = re.findall(r'<answer>(.*?)</answer>', text, re.DOTALL | re.IGNORECASE)
+        answer = answer_matches[-1].strip() if answer_matches else text.strip()
         
         return {
             "thinking": thinking,
@@ -404,33 +404,54 @@ Provide findings for EACH pole separately, then give an overall site assessment.
     
     def _parse_findings(self, answer: str) -> List[Dict[str, str]]:
         """
-        Parse structured findings from the answer text.
-        
-        Args:
-            answer: The answer text from model output
-            
-        Returns:
-            List of finding dictionaries with category, description, and severity
+        Parse structured per-pole findings from the answer text.
         """
         findings = []
         
-        # Look for severity markers
-        for severity in ["CRITICAL", "WARNING", "INFO"]:
-            # Find all instances of this severity level
-            pattern = rf'{severity}[:\s]+([^\n]+)'
-            matches = re.finditer(pattern, answer, re.IGNORECASE)
-            
-            for match in matches:
-                findings.append({
-                    "severity": severity,
-                    "description": match.group(1).strip(),
-                })
+        # Remove Overall Site Assessment before parsing poles
+        answer_clean = re.split(r'Overall Site Assessment:', answer)[0].strip()
         
-        # If no structured findings found, return the whole answer as INFO
+        # Split answer into pole sections
+        pole_sections = re.split(r'(?=Pole \d+:)', answer_clean)
+        
+        for section in pole_sections:
+            section = section.strip()
+            if not section or not section.startswith("Pole"):
+                continue
+            
+            # Extract pole ID
+            pole_match = re.match(r'(Pole \d+):', section)
+            pole_id = pole_match.group(1) if pole_match else "Unknown Pole"
+            
+            # Determine severity from explicit Severity Rating line only
+            severity = "INFO"
+            severity_match = re.search(r'Severity Rating:\s*(CRITICAL|WARNING|INFO)', section, re.IGNORECASE)
+            if severity_match:
+                severity = severity_match.group(1).upper()
+            
+            # Get description after "Pole X:"
+            description = re.sub(r'^Pole \d+:\s*', '', section).strip()
+            
+            # Remove severity rating line for cleaner output
+            description_clean = re.sub(r'Severity Rating:\s*(CRITICAL|WARNING|INFO)\s*\([^)]*\)\.?', '', description).strip()
+            
+            # Extract the severity reason
+            reason_match = re.search(r'Severity Rating:\s*(?:CRITICAL|WARNING|INFO)\s*\(([^)]+)\)', section)
+            reason = reason_match.group(1) if reason_match else ""
+            
+            findings.append({
+                "severity": severity,
+                "pole_id": pole_id,
+                "description": description_clean,
+                "reason": reason,
+            })
+        
         if not findings:
             findings.append({
                 "severity": "INFO",
-                "description": answer,
+                "pole_id": "General",
+                "description": answer[:200],
+                "reason": "",
             })
         
         return findings
