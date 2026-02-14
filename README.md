@@ -30,7 +30,7 @@
 
 > 🖥️ **[Try the Interactive 3D Demo →](https://hmac10.github.io/Parallax/web_demo.html)**
 >
-> Interactive 3D visualization of the flight path planning. Uses simulated data for demonstration — no live API calls or GPU required. Clone the repo and open in your browser.
+> Interactive 3D visualization of the flight path planning. Uses simulated data for demonstration — no live API calls or GPU required. Clone the repo and open in your browser or click the hyperlink above.
 
 ---
 
