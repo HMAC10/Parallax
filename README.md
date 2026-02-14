@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/parallax_banner2.jpg" alt="PARALLAX Banner" width="700"/>
-</p>
+<h1 align="center">PARALLAX</h1>
 
 <h3 align="center">Digital Twin Ground Control — Test Before You Fly</h3>
 
@@ -20,15 +18,19 @@
 
 ---
 
-## Demo Video
+## Demo Videos
 
-> 🎬 **[Watch the Full Demo →](https://your-video-link-here)**
+> 🎬 **[Watch the Full Demo →]([https://your-video-link-here](https://youtu.be/T9DzC8LJAPA))**
 >
 > Watch PARALLAX plan, simulate, and execute a real utility pole inspection in Seattle, WA — from a single English command to an AI-generated inspection report.
 
-> 🖥️ **[Try the Interactive 3D Demo →](demo/web_demo.html)**
+> 🎥 **[Full Pipeline Run (Uncut) →](https://youtu.be/kz-XgTp6oP4)**
 >
-> Explore the flight path visualization in your browser — no GPU or installation required.
+> Unedited terminal recording of the complete 7-phase pipeline executing on an NVIDIA L40S GPU.
+
+> 🖥️ **[Try the Interactive 3D Demo →](web_demo.html)**
+>
+> Interactive 3D visualization of the flight path planning. Uses simulated data for demonstration — no live API calls or GPU required. Clone the repo and open in your browser.
 
 ---
 
@@ -166,10 +168,12 @@ web_demo.html             Interactive 3D flight path visualization (Three.js)
 
 ## What's Next
 
-- **Real-time video streaming** — Cosmos analyzes footage during the flight, not after
-- **Automated airspace checks** — B4UFLY integration so no pilot needs to be involved
-- **Dynamic path adjustment** — drone reroutes around obstacles mid-mission
-- **Professional report generation** — exportable PDFs ready for engineering teams
+- **Real-time video streaming** — Cosmos analyzes footage during the flight, not after, giving engineers a live AI-assisted view of what the drone sees
+- **Automated airspace checks** — B4UFLY integration directly into the pipeline so PARALLAX automatically verifies restricted airspace, TFRs, and no-fly zones before launch — no pilot involvement needed
+- **Dynamic path adjustment** — real-time obstacle avoidance where the drone creates new paths on the fly if something unexpected enters its flight path, rather than blindly following pre-programmed waypoints
+- **Professional report generation** — exportable PDFs ready for engineering teams, insurance adjusters, and regulatory compliance
+- **Automated 3D environment generation** — using satellite imagery and uploaded photos to automatically build the digital twin, so any new site can be validated without manual 3D modeling
+- **Multi-drone fleet coordination** — multiple drones sharing detections, handing off monitoring zones, and collaborating on large-scale inspections from a single command
 
 ---
 
@@ -196,5 +200,5 @@ PARALLAX was born from a real problem encountered building Voltair - the drone i
 <p align="center">
   <a href="https://github.com/HMAC10">GitHub</a> •
   <a href="#">Demo Video</a> •
-  <a href="https://www.linkedin.com/in/huntermckay">LinkedIn</a>
+  <a href="https://www.linkedin.com/in/hunter-mckay">LinkedIn</a>
 </p>
