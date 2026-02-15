@@ -187,7 +187,7 @@ The long-term vision: any utility worker, construction manager, or insurance adj
 
 ## About
 
-Built by **Hunter McKay** — University of Washington Double Major in Information Systems & Finance (3.98 GPA). Co-founded Voltair, an AI drone infrastructure startup that won the **$25K Dempsey Startup Competition** (1st of 174 teams) and **$15K Environmental Innovation Challenge**.
+Built by **Hunter McKay** - University of Washington Double Major in Information Systems & Finance (3.98 GPA). Co-founded Voltair, an AI drone infrastructure startup that won the **$25K Dempsey Startup Competition** (1st of 174 teams) and **$15K Environmental Innovation Challenge**.
 
 PARALLAX was born from a real problem encountered building Voltair - the drone industry has incredible hardware but lacks the AI brain to make autonomous inspection accessible to everyone. 
 
