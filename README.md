@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="#demo-video">Demo Video</a> •
+  <a href="#see-it-in-action">See It In Action</a> •
   <a href="#the-problem">The Problem</a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#nvidia-ai-stack">NVIDIA Stack</a> •
