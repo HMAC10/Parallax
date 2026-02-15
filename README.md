@@ -46,7 +46,7 @@ The hardware is incredible — modern drones fly autonomously for 40+ minutes wi
 - One bad flight plan can **crash a $10,000 drone in seconds**
 - If anything changes on site, you're **starting from scratch**
 
-This doesn't scale. The US alone has **180 million utility poles**, **600,000 bridges**, and **3.5 million miles of power lines** that need regular inspection. The bottleneck isn't the drone, it's the brain.
+This doesn't scale. The US alone has **180 million utility poles**, **600,000 bridges**, and **5.5 million miles of power lines** that need regular inspection. The bottleneck isn't the drone, it's the brain.
 
 **PARALLAX is the brain I wished we had at Voltair.**
 
