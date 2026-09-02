@@ -191,6 +191,8 @@ Built by **Hunter McKay** - University of Washington Double Major in Information
 
 PARALLAX was born from a real problem encountered building Voltair - the drone industry has incredible hardware but lacks the AI brain to make autonomous inspection accessible to everyone. 
 
+PARALLAX was built in a two-week sprint for NVIDIA's GTC 2026 Golden Ticket contest and the Cosmos Cookoff hackathon.
+
 ---
 
 <p align="center">
